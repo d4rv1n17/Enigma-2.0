@@ -17,25 +17,24 @@ import scram_gen as sg
 
 # function to define is internet connection is available
 def internet_connection():
-
     url_image = 'https://google.com/'
 
     timeout = 10
     try:
         request = requests.get(url_image, timeout=timeout)
         ui.label_12.setPixmap(ui.internet)
+        ui.label_13.setText("")
     except (requests.ConnectionError, requests.Timeout) as exception:
         ui.label_12.setPixmap(ui.no_internet)
-        ui.textBrowser.setText("No internet connection!")
+        ui.label_13.setText(" No internet connection or server isn't available!")
 
 
 # Generation scramble and getting picture of cube 2x2x2
 def cube2x2():
-
+    ui.label_13.setText("")
+    internet_connection()
     global scrambleSellection
     scrambleSellection = 1
-    url_image = 'https://google.com/'
-    timeout = 10
     try:
 
         SCRAMBLE = sg.generate_scramble("2x2x2", 10)
@@ -51,16 +50,16 @@ def cube2x2():
 
     except (requests.ConnectionError, requests.Timeout) as exception:
         ui.label_12.setPixmap(ui.no_internet)
-        ui.textBrowser.setText("No internet connection or server is not avaible!")
+        ui.label_13.setText(" No internet connection or server isn't available!")
         ui.label_4.setText(".")
 
     
 # Generation scramble and getting picture of cube 3x3x3
 def cube3x3():
+    ui.label_13.setText("")
+    internet_connection()
     global scrambleSellection
     scrambleSellection = 2
-    url_image = 'https://google.com/'
-    timeout = 10
     try:
 
         SCRAMBLE = sg.generate_scramble("3x3x3", 25)
@@ -76,16 +75,16 @@ def cube3x3():
 
     except (requests.ConnectionError, requests.Timeout) as exception:
         ui.label_12.setPixmap(ui.no_internet)
-        ui.textBrowser.setText("No internet connection or server is not avaible!")
+        ui.label_13.setText(" No internet connection or server isn't available!")
         ui.label_4.setText(".")
     
 
 # Generation scramble and getting picture of cube 4x4x4
 def cube4x4():
+    ui.label_13.setText("")
+    internet_connection()
     global scrambleSellection
     scrambleSellection = 3
-    url_image = 'https://google.com/'
-    timeout = 10
     try:
 
         SCRAMBLE = sg.generate_scramble("4x4x4", 45)
@@ -101,16 +100,16 @@ def cube4x4():
 
     except (requests.ConnectionError, requests.Timeout) as exception:
         ui.label_12.setPixmap(ui.no_internet)
-        ui.textBrowser.setText("No internet connection or server is not avaible!")
+        ui.label_13.setText(" No internet connection or server isn't available!")
         ui.label_4.setText(".")
 
 
 # Generation scramble and getting picture of cube 5x5x5
 def cube5x5():
+    ui.label_13.setText("")
+    internet_connection()
     global scrambleSellection
-    scrambleSellection = 4
-    url_image = 'https://google.com/'
-    timeout = 10
+    scrambleSellection = 40
     try:
 
         SCRAMBLE = sg.generate_scramble("5x5x5", 60)
@@ -126,16 +125,16 @@ def cube5x5():
 
     except (requests.ConnectionError, requests.Timeout) as exception:
         ui.label_12.setPixmap(ui.no_internet)
-        ui.textBrowser.setText("No internet connection or server is not avaible!")
+        ui.label_13.setText(" No internet connection or server isn't available!")
         ui.label_4.setText(".")
 
 
 # Generation scramble and getting picture of cube 6x6x6
 def cube6x6():
+    ui.label_13.setText("")
+    internet_connection()
     global scrambleSellection
     scrambleSellection = 5
-    url_image = 'https://google.com/'
-    timeout = 10
     try:
 
         SCRAMBLE = sg.generate_scramble("6x6x6", 85)
@@ -151,16 +150,16 @@ def cube6x6():
 
     except (requests.ConnectionError, requests.Timeout) as exception:
         ui.label_12.setPixmap(ui.no_internet)
-        ui.textBrowser.setText("No internet connection or server is not avaible!")
+        ui.label_13.setText(" No internet connection or server isn't available!")
         ui.label_4.setText(".")
 
 
 # Generation scramble and getting picture of cube 7x7x7
 def cube7x7():
+    ui.label_13.setText("")
+    internet_connection()
     global scrambleSellection
     scrambleSellection = 7
-    url_image = 'https://google.com/'
-    timeout = 10
     try:
 
         SCRAMBLE = sg.generate_scramble("7x7x7", 100)
@@ -176,64 +175,61 @@ def cube7x7():
 
     except (requests.ConnectionError, requests.Timeout) as exception:
         ui.label_12.setPixmap(ui.no_internet)
-        ui.textBrowser.setText("No internet connection or server is not avaible!")
+        ui.label_13.setText(" No internet connection or server isn't available!")
         ui.label_4.setText(".")
 
 
 # Generation scramble without getting picture of pyraminx
 def pyraminx():
+    internet_connection()
     global scrambleSellection
     scrambleSellection = 6
-    url_image = 'https://google.com/'
-    timeout = 10
     try:
 
         SCRAMBLE = sg.generate_scramble("pyraminx", 10)
         SCRAMBLE.replace(" ", "")
         ui.textBrowser.setText(SCRAMBLE)
         ui.label_4.setText(".")
+        ui.label_13.setText("         No scramble picture for this discipline!")
 
     except (requests.ConnectionError, requests.Timeout) as exception:
         ui.label_12.setPixmap(ui.no_internet)
-        ui.textBrowser.setText("No internet connection or server is not avaible!")
         ui.label_4.setText(".")
     
 
 # Generation scramble without getting picture of skewb
 def skewb():
+    internet_connection()
     global scrambleSellection
     scrambleSellection = 8
-    url_image = 'https://google.com/'
-    timeout = 10
     try:
 
         SCRAMBLE = sg.generate_scramble("skewb", 10)
         SCRAMBLE.replace(" ", "")
         ui.textBrowser.setText(SCRAMBLE)
         ui.label_4.setText(".")
+        ui.label_13.setText("         No scramble picture for this discipline!")
 
     except (requests.ConnectionError, requests.Timeout) as exception:
         ui.label_12.setPixmap(ui.no_internet)
-        ui.textBrowser.setText("No internet connection or server is not avaible!")
         ui.label_4.setText(".")
 
 
 # Generation scramble without getting picture of megaminx
 def megaminx():
+    internet_connection()
     global scrambleSellection
     scrambleSellection = 9
-    url_image = 'https://google.com/'
-    timeout = 10
     try:
 
         SCRAMBLE = sg.generate_scramble("megaminx", 77)
         SCRAMBLE.replace(" ", "")
         ui.textBrowser.setText(SCRAMBLE)
         ui.label_4.setText(".")
+        ui.label_13.setText("         No scramble picture for this discipline!")
 
     except (requests.ConnectionError, requests.Timeout) as exception:
         ui.label_12.setPixmap(ui.no_internet)
-        ui.textBrowser.setText("No internet connection or server is not avaible!")
         ui.label_4.setText(".")
 
 
@@ -261,7 +257,7 @@ def CallScrambleAfterStop():
         megaminx()
 
     
-#Timer
+#Variables for timer function
 scrambleSellection = 0
 isStart = False
 startTime = datetime.datetime.now()
@@ -317,7 +313,7 @@ def stop():
     CallScrambleAfterStop()
 
 
-#timer
+#Timer function
 def timerFunction():
     global time_delta, startTime
     time_delta = datetime.datetime.now() - startTime
@@ -390,7 +386,7 @@ if __name__ == "__main__":
     ui.pushButton_10.clicked.connect( ResetAttemtpsLablesAndAO5 )
 
 
-    #Bind
+    #Space bind
     Enigma.shortcut_open = QShortcut(QKeySequence('Space'), Enigma)
     Enigma.shortcut_open.activated.connect(OnKeyPressHandler)
 

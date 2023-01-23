@@ -25,7 +25,7 @@ class Ui_Enigma(object):
         Enigma.setEnabled(True)
         width = 1206
         height = 905        
-        Enigma.resize(width, height)
+        Enigma.setFixedSize(width, height)
         font = QtGui.QFont()
         font.setPointSize(16)
         Enigma.setFont(font)
@@ -48,10 +48,9 @@ class Ui_Enigma(object):
 "")
         self.label.setText("")
         self.label.setPixmap(self.ep)
-        #self.label.setPixmap(QtGui.QPixmap("../Pictures/enigma 228 100.png"))
         self.label.setObjectName("label")
         self.textBrowser = QtWidgets.QTextBrowser(self.centralwidget)
-        self.textBrowser.setGeometry(QtCore.QRect(260, 20, 741, 221))
+        self.textBrowser.setGeometry(QtCore.QRect(260, 20, 831, 241))#221 #741
         font = QtGui.QFont()
         font.setFamily("Nirmala UI")
         font.setPointSize(20)
@@ -80,7 +79,6 @@ class Ui_Enigma(object):
 "border: 0px solid #000000;\n"
 "")
         self.lineEdit.setAlignment(QtCore.Qt.AlignCenter)
-        #self.lineEdit.setCursorMoveStyle(QtCore.Qt.LogicalMoveStyle)
         self.lineEdit.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
         self.lineEdit.setObjectName("lineEdit")
         self.pushButton_3 = QtWidgets.QPushButton(self.centralwidget)
@@ -190,6 +188,17 @@ class Ui_Enigma(object):
         self.label_12.setStyleSheet("color: #bfbfbf")
         self.label_12.setText("")
         self.label_12.setObjectName("label_12")
+        self.label_13 = QtWidgets.QLabel(self.centralwidget)
+        self.internet = QPixmap("int_con.png")
+        self.no_internet = QPixmap("noint_con.png")
+        self.label_13.setGeometry(QtCore.QRect(360, 470, 501, 61))
+        font = QtGui.QFont()
+        font.setFamily("Nirmala UI")
+        font.setPointSize(17)
+        self.label_13.setFont(font)
+        self.label_13.setStyleSheet("color: #bfbfbf")
+        self.label_13.setText("")
+        self.label_13.setObjectName("label_13")
         self.pushButton_4 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton_4.setGeometry(QtCore.QRect(70, 250, 131, 41))
         font = QtGui.QFont()
@@ -374,12 +383,3 @@ class Ui_Enigma(object):
         self.pushButton_11.setText(_translate("Enigma", "Skewb"))
         self.pushButton_12.setText(_translate("Enigma", "Megaminx"))
 
-
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    Enigma = QtWidgets.QMainWindow()
-    ui = Ui_Enigma()
-    ui.setupUi(Enigma)
-    Enigma.show()
-    sys.exit(app.exec_())
