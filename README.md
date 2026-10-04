@@ -1,141 +1,143 @@
 # Enigma Cube Timer 2.2
 
-Таймер для спидкуберов на Python + PyQt5. Работает полностью офлайн.
+A speedcubing timer for Windows, built with Python and PyQt5. It works fully offline.
 
-## Новое в 2.2 — минимализм
-- Убраны рамки и обводки. Панели стали «карточками» чуть светлее фона, и их осталось меньше: справа одна карточка с превью и графиком.
-- Кнопки теперь тихие: серый текст, который проявляется при наведении. Жёлтый цвет остался только там, где он что-то значит (выбранная дисциплина, рекорд, штраф).
-- Дисциплины в шапке стали текстовыми вкладками с жёлтой линией под выбранной.
-- Скрамбл больше не в рамке. Таймер набран более лёгким шрифтом, больше отступов.
-- Минимальный режим (клавиша **M** или кнопка ◧): на экране только скрамбл и время.
-- Тёмная полоса заголовка окна и диалогов на Windows 10/11.
-- Подсказка «зажми пробел» показывается только в пустой сессии.
+Enigma Cube generates WCA-style scrambles and shows a preview of each one. It times solves like a Stackmat and tracks your averages and personal bests.
 
-## Новое в 2.1
-- Новый логотип Enigma Cube: шапка, иконка окна и иконка .exe. Цвета интерфейса взяты из логотипа.
-- Превью скрамбла для Пирамидки, Скьюба и Square-1 (у Square-1 пунктиром показана линия слайса).
-- Новые дисциплины: OH, 3BLD (со случайной ориентацией `Rw Uw`) и FMC (`R' U' F … R' U' F`).
-- Вкладка «Распределение» рядом с графиком прогресса: гистограмма твоих времён.
-- Выбор сессии переехал в левую панель. Окно «О программе» открывается кликом по логотипу.
-- Исправлено: в модели Square-1 была ошибка, из-за которой часть скрамблов не выполнялась на настоящей головоломке.
-- Появился установщик `EnigmaCube-Setup.exe`, который собирается одним кликом (см. ниже).
-- Язык по умолчанию берётся из системы: на русской Windows интерфейс сразу русский.
+## Features
 
-Сохранённые сборки из 2.0 никуда не денутся: они лежат там же.
+- **14 WCA events:** 2x2–7x7, Pyraminx, Skewb, Megaminx, Clock, Square-1, OH, 3BLD and FMC.
+- **Scramble preview:** cube nets for 2x2–7x7 and drawings for Pyraminx, Skewb and Square-1. The previews are rendered offline.
+- **Stackmat-style timer:**
+  - Hold Space until the time turns green, then release to start.
+  - Optional 15-second WCA inspection with beeps at 8 and 12 s.
+  - Automatic +2 and DNF penalties.
+- **WCA statistics:**
+  - Current and best single, mo3, ao5, ao12, ao50 and ao100.
+  - Session mean and standard deviation.
+  - A breakdown of any average, with trimmed times in brackets.
+- **Charts:** progress (singles, ao5, ao12) and the distribution of your times.
+- **PB notifications** for new best singles and averages.
+- **Sessions:** unlimited sessions per event, csTimer import and CSV export.
+- **Minimal dark UI:**
+  - Focus mode hides everything but the time while you solve.
+  - Minimal mode (**M**) shows only the scramble and the timer.
+  - English and Russian interface.
 
-## Как сделать установщик (Setup.exe)
+## Requirements
 
-1. Если Python ещё не стоит, установи его с [python.org](https://www.python.org/downloads/) и при установке отметь **«Add python.exe to PATH»**.
-2. Дважды кликни **`build_installer.bat`**.
-3. Подожди несколько минут. Скрипт сам:
-   - поставит PyQt5, PyInstaller и Pillow;
-   - соберёт программу;
-   - установит Inno Setup через winget, если его нет;
-   - соберёт установщик.
-4. Откроется папка `Output` с файлом **`EnigmaCube-Setup-2.2.exe`**. Этот файл и выкладывай на сайт.
+- Windows 10 or 11 (64-bit)
+- About 100 MB of disk space
+- A screen of 1280×720 or larger
+- No internet connection needed
 
-Что делает установщик у пользователя:
-- ставит программу без прав администратора;
-- создаёт ярлык в меню «Пуск» и, если отметить галочку, на рабочем столе;
-- добавляет программу в «Установку и удаление программ»;
-- говорит на русском, английском и украинском.
+## Install
 
-Python пользователю не нужен. При обновлении на новую версию сохранённые сборки остаются.
+1. Download `EnigmaCube-Setup-2.2.exe` and run it.
+2. If Windows shows **"Windows protected your PC"**, click **More info → Run anyway**. Windows shows this for new apps that don't have a paid code-signing certificate.
+3. Follow the wizard and leave **"Launch Enigma Cube"** checked at the end.
 
-**Вариант без своего ПК.** Если проект лежит на GitHub, установщик собирается сам: открой вкладка **Actions → Build Windows installer** и скачай `EnigmaCube-Setup`. Если поставить тег `v2.1`, файл сам прикрепится к Release.
+The installer has these properties:
+- It doesn't need administrator rights.
+- It adds a Start-menu shortcut and, if you choose, a desktop shortcut.
+- You can uninstall the app from **Settings → Apps**.
+- Your solves are stored in `%APPDATA%\EnigmaTimer` and are kept when you update or uninstall.
 
-**Запуск без сборки (для разработки):** `pip install -r requirements.txt`, потом `python main.py`.
+## Keyboard shortcuts
 
-### Текст для страницы скачивания
-
-> **Как установить Enigma Cube**
-> 1. Скачай `EnigmaCube-Setup-2.2.exe` и запусти его.
-> 2. Если Windows покажет «Windows защитила ваш компьютер», нажми **«Подробнее» → «Выполнить в любом случае»**. Так бывает со всеми новыми программами без платной цифровой подписи.
-> 3. Нажимай «Далее», в конце оставь галочку «Запустить Enigma Cube».
->
-> Требуется Windows 10 или 11 (64-бит). Удалить: «Параметры → Приложения → Enigma Cube».
-
-### Новая версия
-
-Поменяй номер версии в трёх местах:
-- `enigma_timer/__init__.py`;
-- `installer/EnigmaCube.iss` (`MyAppVersion`);
-- `installer/version_info.txt`.
-
-Потом снова запусти `build_installer.bat`. `AppId` в `.iss` не меняй: по нему установщик понимает, что это обновление.
-
-## Управление
-
-| Клавиша | Действие |
+| Key | Action |
 |---|---|
-| Пробел | зажать (цифры станут красными → зелёными) и отпустить, чтобы стартовать |
-| Любая клавиша / клик | остановить таймер |
-| Esc | отменить инспекцию |
-| Ctrl+1 / Ctrl+2 / Ctrl+3 | последняя сборка: OK / +2 / DNF |
-| Ctrl+Z | удалить последнюю сборку |
-| N | новый скрамбл |
-| M | минимальный режим |
-| Ctrl+E | ввести время вручную (12.34, 1:05.20, 1234, DNF, 14.00+) |
+| Space | Hold until the time turns green, then release to start |
+| Any key / click | Stop the timer |
+| Esc | Cancel inspection |
+| Ctrl+1 / Ctrl+2 / Ctrl+3 | Mark the last solve OK / +2 / DNF |
+| Ctrl+Z | Delete the last solve |
+| N | New scramble |
+| M | Minimal mode |
+| Ctrl+E | Enter a time manually (`12.34`, `1:05.20`, `1234`, `DNF`, `14.00+`) |
+| Ctrl+, | Settings |
 
-Таймер можно запускать и мышью: зажми и отпусти кнопку на цифрах.
+You can also start the timer with the mouse: press and release on the time.
 
-## Что нового по сравнению с первой версией
+## Building from source
 
-**Таймер**
-- Старт как у Stackmat/csTimer: зажимаешь пробел, ждёшь зелёный цвет, отпускаешь. Время удержания настраивается от 0 до 1 с.
-- Время считается через `time.perf_counter()`, а не по тикам `QTimer`, поэтому оно точное.
-- Инспекция WCA на 15 секунд (по желанию): звуковой сигнал на 8 и 12 с, автоматически ставятся +2 и DNF.
-- Режим фокуса: пока идёт сборка, всё кроме времени скрыто.
-- Время во время сборки можно показывать полностью, только десятые, только секунды или скрывать.
-
-**Скрамблы**
-- Генерируются локально, без интернета, для 14 дисциплин WCA: 2x2–7x7, Pyraminx, Skewb, Megaminx, Clock, Square-1, OH, 3BLD, FMC.
-- Нотация как в WCA: `Rw`, `3Rw`, у Пирамидки есть «тип»-ходы, Megaminx в формате Pochmann, Square-1 с проверкой формы.
-- Скрамблы без лишних ходов: подряд не бывает `R L R`, `U U'` и подобного.
-- Развёртка кубов 2x2–7x7 рисуется в самом приложении. Сервер cube.rider.biz больше не нужен, и окно не зависает.
-
-**Статистика**
-- Средние считаются по правилам WCA: в ao5 и ao12 отбрасываются лучшая и худшая сборки, в ao50 и ao100 — по 5 %. DNF тоже учитываются.
-- Для single, mo3, ao5, ao12, ao50 и ao100 показываются текущее и лучшее значения, а также среднее по сессии и σ.
-- По клику на любое среднее открывается разбор: все времена (отброшенные в скобках) со скрамблами, его можно скопировать.
-- График прогресса показывает синглы, ao5 и ao12 и подсказки при наведении.
-- При новом личном рекорде (сингл, ao5, ao12…) появляется уведомление.
-
-**Сессии и данные**
-- У каждой головоломки может быть сколько угодно сессий.
-- Всё сохраняется автоматически (`%APPDATA%\EnigmaTimer\data.json` на Windows).
-- Можно импортировать данные из csTimer и экспортировать сессию в CSV.
-- У сборки можно поменять штраф, добавить комментарий или удалить её: двойной клик или правая кнопка мыши.
-
-**Интерфейс**
-- Тёмная тема в фирменном жёлтом цвете Enigma. Окно можно растягивать, его размер запоминается.
-- Есть английский и русский языки (меняются в настройках).
-
-## Исправленные ошибки старой версии
-- После 5x5 перестал появляться новый скрамбл: у неё был код `40` вместо `4`.
-- У Пирамидки, Скьюба и Мегаминкса в скрамбл попадали чужие ходы: `valid()` подставлял буквы от куба (D, F).
-- Перед каждым скрамблом шёл запрос к google.com и к серверу картинок, и интерфейс зависал.
-- ao5 и ao12 считались как обычное среднее, без отбрасывания лучшей и худшей сборок, и сбрасывались каждые 5/12 сборок.
-- Таймер стартовал в момент нажатия пробела, а не при отпускании.
-- Картинки грузились по пути относительно текущей папки, поэтому приложение без них падало при запуске из другой папки.
-
-## Структура
+**Run it during development:**
 
 ```
-main.py                  точка входа
+pip install -r requirements.txt
+python main.py
+```
+
+**Build the installer on Windows:**
+
+1. Install Python 3.8+ from [python.org](https://www.python.org/downloads/). Tick **"Add python.exe to PATH"** during setup.
+2. Double-click **`build_installer.bat`**. The script:
+   - installs PyQt5, PyInstaller and Pillow;
+   - builds the app;
+   - installs Inno Setup via winget if it's missing;
+   - creates the installer.
+3. When it finishes, the `Output` folder opens with `EnigmaCube-Setup-2.2.exe` inside.
+
+**Build on GitHub Actions:** every push to `main` builds the installer automatically. Download it from **Actions → Build Windows installer → EnigmaCube-Setup**. If you push a tag such as `v2.2`, the installer is also attached to a GitHub Release.
+
+**Run the tests:**
+
+```
+python -m unittest discover -s tests
+```
+
+**Release a new version:** update the version number in three places:
+- `enigma_timer/__init__.py`
+- `installer/EnigmaCube.iss` (`MyAppVersion`)
+- `installer/version_info.txt`
+
+Don't change the `AppId` in the `.iss` file. The installer uses it to recognise an update.
+
+## Project structure
+
+```
+main.py                  entry point
 enigma_timer/
-  scramble.py            генераторы скрамблов
-  cube.py                симулятор NxN-куба для превью
-  puzzles.py             симуляторы Пирамидки, Скьюба, Square-1 для превью
-  stats.py               сборки, средние WCA, форматирование
-  storage.py             сохранение, импорт csTimer, экспорт CSV
-  window.py              главное окно и логика таймера
-  widgets.py             большой таймер, превью, график, гистограмма
-  dialogs.py             настройки, карточка сборки, о программе
-assets/                  логотип, иконки (app.ico для exe)
-installer/               скрипт Inno Setup, картинки мастера установки, версия exe
-build_installer.bat      сборка установщика в один клик
-.github/workflows/       автоматическая сборка установщика на GitHub
-  theme.py, i18n.py      стиль и переводы
-tests/test_core.py       тесты логики (python -m unittest)
+  scramble.py            scramble generators
+  cube.py                NxN cube simulator for previews
+  puzzles.py             Pyraminx, Skewb and Square-1 simulators for previews
+  stats.py               solves, WCA averages, formatting
+  storage.py             persistence, csTimer import, CSV export
+  window.py              main window and timer state machine
+  widgets.py             timer display, preview, charts
+  dialogs.py             settings, solve details, about
+  theme.py, i18n.py      styling and translations
+assets/                  logo and icons (app.ico for the exe)
+installer/               Inno Setup script, wizard images, exe version info
+build_installer.bat      one-click installer build
+.github/workflows/       automatic installer build on GitHub
+tests/test_core.py       unit tests
 ```
+
+## Changelog
+
+### 2.2: minimal redesign
+- The UI has no borders or outlines. Cards are a shade lighter than the background, and the right column is now a single card.
+- Buttons are quiet text that appears on hover. Yellow is used only where it means something: the selected event, PBs and penalties.
+- Events in the header are now text tabs with a yellow underline.
+- The scramble no longer sits in a box. The timer uses a lighter font, and there is more spacing.
+- New minimal mode (**M**).
+- The title bar is dark on Windows 10 and 11.
+- The distribution chart now uses horizontal bars and appears after 5 solves.
+
+### 2.1
+- New Enigma Cube logo, window icon and exe icon. The UI colours are taken from the logo.
+- Scramble previews for Pyraminx, Skewb and Square-1.
+- New events: OH, 3BLD (with random `Rw Uw` orientation) and FMC (`R' U' F … R' U' F`).
+- A distribution tab next to the progress chart.
+- The installer is now built with one click, and the interface language follows the system.
+- Fixed a Square-1 model bug that could produce scrambles you couldn't do on a real puzzle.
+
+### 2.0: full rewrite
+The app was rewritten from the original prototype. These bugs in the old version were fixed:
+- 5x5 stopped generating new scrambles after a solve.
+- Pyraminx, Skewb and Megaminx scrambles contained cube moves such as D and F.
+- ao5 and ao12 were plain means without trimming and reset every 5 or 12 solves.
+- The UI froze on every scramble because of network requests to google.com and an image server.
+- The timer started when Space was pressed instead of when it was released.
+- Images were loaded relative to the current folder, so the app crashed when launched from elsewhere.
