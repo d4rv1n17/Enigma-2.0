@@ -2,23 +2,20 @@
 """Training section: learning path, algorithm browser, lessons and trainer.
 
 The same TrainingWidget is used inside the main window and in any number of
-separate TrainingWindow instances; they share one TrainingHub, so progress
+separate windows (see windows.py); they share one TrainingHub, so progress
 changed in one window appears in all of them immediately.
 """
 
 import math
-import sys
+import random
 from urllib.parse import unquote
 
 from PyQt5.QtCore import QObject, QPointF, QRectF, QSize, Qt, pyqtSignal
 from PyQt5.QtGui import (QColor, QFont, QImage, QPainter, QPen, QPixmap,
                          QPolygonF, QTextDocument)
-from PyQt5.QtWidgets import (QAbstractItemView, QButtonGroup, QComboBox, QFrame, QSizePolicy,
-                             QHBoxLayout, QLabel, QListView, QListWidget, QListWidgetItem,
-                             QMainWindow, QPushButton, QStackedWidget,
-                             QStyle, QStyledItemDelegate, QTextBrowser, QVBoxLayout, QWidget)
+from PyQt5.QtWidgets import (QAbstractItemView, QButtonGroup, QComboBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QListView, QListWidget, QListWidgetItem, QProgressBar, QPushButton, QScrollArea, QSizePolicy, QStackedWidget, QStyle, QStyledItemDelegate, QTextBrowser, QVBoxLayout, QWidget)
 
-from . import algs, caseview, learn, theme
+from . import algs, caseview, insights, learn, theme
 from .fast3 import State
 from .i18n import lang, pick, tr
 from .lessons import lesson_html
@@ -188,6 +185,9 @@ class LevelDelegate(QStyledItemDelegate):
                        pick(learn.TIER_NAMES[lid[5:]]).upper())
             p.restore()
             return
+        if lid == "overview":
+            self._paint_overview(p, option)
+            return
         lv = learn.LEVEL_BY_ID.get(lid)
         if lv is None:
             return
@@ -249,6 +249,173 @@ class LevelDelegate(QStyledItemDelegate):
                 p.setBrush(QColor("#3ddc84" if done >= total else theme.ACCENT))
                 p.drawRoundedRect(fill, 1.5, 1.5)
         p.restore()
+
+
+def _paint_overview_row(self, p, option):
+    r = QRectF(option.rect).adjusted(4, 3, -4, -3)
+    p.save()
+    p.setRenderHint(QPainter.Antialiasing)
+    selected = bool(option.state & QStyle.State_Selected)
+    hover = bool(option.state & QStyle.State_MouseOver)
+    if selected or hover:
+        p.setPen(Qt.NoPen)
+        p.setBrush(QColor(theme.PANEL2 if selected else "#1d1c1c"))
+        p.drawRoundedRect(r, 10, 10)
+    done, total = self.hub.progress.course_counts(self.hub.path)
+    mr = QRectF(r.left() + 10, r.top() + 12, 22, 22)
+    p.setPen(QPen(QColor(theme.ACCENT), 2.2))
+    p.setBrush(Qt.NoBrush)
+    p.drawEllipse(mr.adjusted(1, 1, -1, -1))
+    if total:
+        p.setPen(QPen(QColor(theme.ACCENT), 2.2))
+    f = QFont(theme.ui_font())
+    f.setPixelSize(14)
+    f.setWeight(QFont.DemiBold)
+    p.setFont(f)
+    p.setPen(QColor(theme.TEXT))
+    tx = mr.right() + 10
+    p.drawText(QRectF(tx, r.top() + 6, r.right() - tx - 8, 20), Qt.AlignLeft | Qt.AlignVCenter,
+               tr("overview"))
+    f.setPixelSize(11)
+    f.setWeight(QFont.Normal)
+    p.setFont(f)
+    p.setPen(QColor(theme.MUTED))
+    pct = int(round(100.0 * done / total)) if total else 0
+    p.drawText(QRectF(tx, r.top() + 26, r.right() - tx - 8, 16), Qt.AlignLeft | Qt.AlignVCenter,
+               tr("course_pct") % pct)
+    p.restore()
+
+
+LevelDelegate._paint_overview = _paint_overview_row
+
+
+class OverviewView(QWidget):
+    """Course home: overall progress, what to do next, all steps."""
+
+    open_level = pyqtSignal(str)
+    review_due = pyqtSignal()
+
+    def __init__(self, hub, parent=None):
+        QWidget.__init__(self, parent)
+        self.hub = hub
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setStyleSheet("QScrollArea, QScrollArea > QWidget > QWidget { background: transparent; }")
+        outer.addWidget(scroll)
+        self.body = QWidget()
+        scroll.setWidget(self.body)
+        self.lay = QVBoxLayout(self.body)
+        self.lay.setContentsMargins(0, 4, 8, 8)
+        self.lay.setSpacing(10)
+
+    def rebuild(self):
+        lay = self.lay
+        while lay.count():
+            item = lay.takeAt(0)
+            w = item.widget()
+            if w is not None:
+                w.deleteLater()
+        prog = self.hub.progress
+        pid = self.hub.path
+        path = learn.PATHS[pid]
+
+        # summary card
+        card = QFrame()
+        card.setObjectName("panel")
+        cl = QVBoxLayout(card)
+        cl.setContentsMargins(20, 16, 20, 18)
+        cl.setSpacing(8)
+        done, total = prog.course_counts(pid)
+        steps_done = sum(1 for lv in path if prog.level_done(lv))
+        head = QLabel(tr("course_steps") % (steps_done, len(path)))
+        head.setStyleSheet("font-size: 18px; font-weight: 700;")
+        cl.addWidget(head)
+        bar = QProgressBar()
+        bar.setRange(0, max(1, total))
+        bar.setValue(done)
+        bar.setTextVisible(False)
+        bar.setFixedHeight(6)
+        cl.addWidget(bar)
+        cases_total = sum(len(lv.cases) for lv in path if lv.set_id)
+        learned = sum(1 for lv in path if lv.set_id for c in lv.cases
+                      if prog.status(c.id) == learn.LEARNED)
+        due_cases = [c for lv in path if lv.set_id for c in lv.cases if prog.is_due(c.id)]
+        info = QLabel(tr("course_info") % (learned, cases_total, len(due_cases)))
+        info.setObjectName("muted")
+        cl.addWidget(info)
+        btns = QHBoxLayout()
+        btns.setSpacing(8)
+        nxt = prog.next_level(pid)
+        if nxt is not None:
+            b = _button("▶  " + tr("continue_with") % pick(nxt.name), "primary")
+            b.clicked.connect(lambda _=False, lid=nxt.id: self.open_level.emit(lid))
+            btns.addWidget(b)
+        else:
+            done_lbl = QLabel(tr("course_done"))
+            done_lbl.setStyleSheet("color: #3ddc84; font-weight: 600;")
+            btns.addWidget(done_lbl)
+        if due_cases:
+            b = _button(tr("review_now") % len(due_cases), "seg")
+            b.clicked.connect(self.review_due.emit)
+            btns.addWidget(b)
+        btns.addStretch(1)
+        cl.addLayout(btns)
+        lay.addWidget(card)
+
+        # steps
+        tier = None
+        for i, lv in enumerate(path):
+            if lv.tier != tier:
+                tier = lv.tier
+                t = QLabel(pick(learn.TIER_NAMES[tier]).upper())
+                t.setObjectName("sectionTitle")
+                t.setContentsMargins(4, 8, 0, 0)
+                lay.addWidget(t)
+            row = QPushButton()
+            row.setObjectName("steprow")
+            row.setCursor(Qt.PointingHandCursor)
+            row.setFocusPolicy(Qt.NoFocus)
+            row.clicked.connect(lambda _=False, lid=lv.id: self.open_level.emit(lid))
+            rl = QHBoxLayout(row)
+            rl.setContentsMargins(14, 10, 14, 10)
+            rl.setSpacing(12)
+            a, b2 = prog.level_counts(lv)
+            mark = QLabel("✓" if a >= b2 else str(i + 1))
+            mark.setFixedSize(26, 26)
+            mark.setAlignment(Qt.AlignCenter)
+            colour = "#3ddc84" if a >= b2 else (theme.ACCENT if nxt is lv else "#2e2c2c")
+            mark.setStyleSheet("background: %s; color: %s; border-radius: 13px; font-weight: 700;"
+                               % (colour, "#111" if (a >= b2 or nxt is lv) else theme.MUTED))
+            rl.addWidget(mark)
+            texts = QVBoxLayout()
+            texts.setSpacing(1)
+            name = QLabel(pick(lv.name))
+            name.setStyleSheet("font-size: 15px; font-weight: 600;")
+            sub = QLabel(pick(lv.subtitle))
+            sub.setObjectName("muted")
+            texts.addWidget(name)
+            texts.addWidget(sub)
+            rl.addLayout(texts, 1)
+            what = []
+            if lv.lesson:
+                what.append(tr("has_lesson"))
+            if lv.set_id:
+                what.append(tr("has_algs") % len(lv.cases))
+            kind = QLabel("  ·  ".join(what))
+            kind.setObjectName("muted")
+            rl.addWidget(kind)
+            cnt = QLabel("%d / %d" % (a, b2) if lv.set_id else (tr("done") if a else ""))
+            cnt.setMinimumWidth(56)
+            cnt.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            cnt.setStyleSheet("color: %s; font-weight: 600;" % ("#3ddc84" if a >= b2 else theme.MUTED))
+            rl.addWidget(cnt)
+            for w in (mark, name, sub, kind, cnt):
+                w.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+            lay.addWidget(row)
+        lay.addStretch(1)
 
 
 class CaseDelegate(QStyledItemDelegate):
@@ -338,7 +505,17 @@ class CaseDetail(QFrame):
         self.setObjectName("panel")
         self.hub = hub
         self.case = None
-        lay = QVBoxLayout(self)
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll.setStyleSheet("QScrollArea, QScrollArea > QWidget > QWidget { background: transparent; }")
+        outer.addWidget(scroll)
+        body = QWidget()
+        scroll.setWidget(body)
+        lay = QVBoxLayout(body)
         lay.setContentsMargins(18, 18, 18, 18)
         lay.setSpacing(8)
         self.img = QLabel()
@@ -361,6 +538,19 @@ class CaseDetail(QFrame):
         self.hint.setWordWrap(True)
         self.hint.setStyleSheet("color: %s;" % theme.SCRAMBLE)
         lay.addWidget(self.hint)
+        self.facts = QLabel()
+        self.facts.setWordWrap(True)
+        self.facts.setTextFormat(Qt.RichText)
+        self.facts.setStyleSheet("color: %s; font-size: 13px;" % theme.SCRAMBLE)
+        lay.addWidget(self.facts)
+        self.alts_title = QLabel(tr("alternatives").upper())
+        self.alts_title.setObjectName("sectionTitle")
+        lay.addWidget(self.alts_title)
+        self.alts = QLabel()
+        self.alts.setWordWrap(True)
+        self.alts.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.alts.setStyleSheet("font-size: 14px; font-weight: 600; color: %s;" % theme.TEXT)
+        lay.addWidget(self.alts)
         self.setup = QLabel()
         self.setup.setWordWrap(True)
         self.setup.setObjectName("muted")
@@ -391,7 +581,7 @@ class CaseDetail(QFrame):
     def show_case(self, case):
         self.case = case
         widgets = (self.img, self.name, self.group, self.alg, self.hint, self.setup,
-                   self.train_btn)
+                   self.train_btn, self.facts, self.alts, self.alts_title)
         for w in widgets:
             w.setVisible(case is not None)
         for b in self.st_group.buttons():
@@ -407,6 +597,11 @@ class CaseDetail(QFrame):
         self.hint.setText(pick(case.hint) if case.hint else "")
         self.hint.setVisible(bool(case.hint))
         self.setup.setText(tr("setup_hint") % case.setup())
+        facts = insights.facts(case)
+        self.facts.setText("<br>".join("• " + pick(f) for f in facts))
+        self.alts.setText("\n\n".join(case.alts))
+        self.alts.setVisible(bool(case.alts))
+        self.alts_title.setVisible(bool(case.alts))
         self.refresh()
 
     def refresh(self):
@@ -492,12 +687,46 @@ class TrainerView(QWidget):
             rr.addWidget(b)
         rr.addStretch(1)
         lay.addWidget(self.rate_row)
-        lay.addStretch(2)
 
-    def start(self, title, cases):
+        # recognition quiz: four names to choose from
+        self.quiz_row = QWidget()
+        qr = QGridLayout(self.quiz_row)
+        qr.setContentsMargins(0, 0, 0, 0)
+        qr.setHorizontalSpacing(8)
+        qr.setVerticalSpacing(8)
+        self.quiz_btns = []
+        for i in range(4):
+            b = _button("", "rate")
+            b.setMinimumWidth(230)
+            b.clicked.connect(lambda _=False, k=i: self.answer_quiz(k))
+            qr.addWidget(b, i // 2, i % 2)
+            self.quiz_btns.append(b)
+        row = QHBoxLayout()
+        row.addStretch(1)
+        row.addWidget(self.quiz_row)
+        row.addStretch(1)
+        lay.addLayout(row)
+        self.next_btn = _button(tr("next") + "  ␣", "primary")
+        self.next_btn.clicked.connect(self.next)
+        row2 = QHBoxLayout()
+        row2.addStretch(1)
+        row2.addWidget(self.next_btn)
+        row2.addStretch(1)
+        lay.addLayout(row2)
+        lay.addStretch(2)
+        self.mode = "review"
+        self.options = []
+        self.answered = False
+        self.quiz_right = 0
+        self.quiz_total = 0
+
+    def start(self, title, cases, mode="review"):
         self.title_text = title
+        self.mode = mode if len(cases) >= 4 else "review"
         self.trainer = learn.Trainer(self.hub.progress, cases)
-        self.title.setText(tr("trainer_title") % title)
+        self.quiz_right = self.quiz_total = 0
+        key = "quiz_title" if self.mode == "quiz" else "trainer_title"
+        self.title.setText(tr(key) % title)
         self.next()
         self.setFocus()
 
@@ -508,6 +737,12 @@ class TrainerView(QWidget):
     def next(self):
         if not self.trainer:
             return
+        if self.mode == "quiz":
+            self._next_quiz()
+            return
+        self.quiz_row.setVisible(False)
+        self.next_btn.setVisible(False)
+        self.setup.setVisible(True)
         self.case = self.trainer.next_case()
         self.auf = learn.random_auf() if self.case.view in ("oll", "pll") else ""
         self.revealed = False
@@ -517,6 +752,55 @@ class TrainerView(QWidget):
         self.answer.setStyleSheet("color: %s; font-size: 14px;" % theme.FAINT)
         self.reveal_btn.setVisible(True)
         self.rate_row.setVisible(False)
+        self._stats()
+
+    def _next_quiz(self):
+        cases = self.trainer.cases
+        self.case = random.choice([c for c in cases if c is not self.case] or cases)
+        same = [c for c in cases if c is not self.case and c.group == self.case.group]
+        other = [c for c in cases if c is not self.case and c not in same]
+        random.shuffle(same)
+        random.shuffle(other)
+        self.options = (same + other)[:3] + [self.case]
+        random.shuffle(self.options)
+        self.answered = False
+        self.auf = learn.random_auf() if self.case.view in ("oll", "pll", "cmll") else ""
+        self.img.setPixmap(case_pixmap(self.case, 260, self.auf, arrows=False))
+        self.setup.setVisible(False)
+        self.reveal_btn.setVisible(False)
+        self.rate_row.setVisible(False)
+        self.quiz_row.setVisible(True)
+        self.next_btn.setVisible(False)
+        for i, (b, c) in enumerate(zip(self.quiz_btns, self.options)):
+            b.setText("%d   %s" % (i + 1, pick(c.name)))
+            b.setStyleSheet("")
+            b.setEnabled(True)
+        self.answer.setText(tr("quiz_hint"))
+        self.answer.setStyleSheet("color: %s; font-size: 14px;" % theme.FAINT)
+        self._stats()
+
+    def answer_quiz(self, k):
+        if self.mode != "quiz" or self.answered or k >= len(self.options):
+            return
+        self.answered = True
+        right = self.options[k] is self.case
+        self.quiz_total += 1
+        self.quiz_right += int(right)
+        q = self.hub.progress.data.setdefault("quiz", {"right": 0, "total": 0})
+        q["total"] += 1
+        q["right"] += int(right)
+        for b, c in zip(self.quiz_btns, self.options):
+            b.setEnabled(False)
+            if c is self.case:
+                b.setStyleSheet("background: #1f4d33; color: #3ddc84;")
+        if not right:
+            self.quiz_btns[k].setStyleSheet("background: #4d1f22; color: #ff6b6f;")
+        verdict = tr("quiz_right") if right else tr("quiz_wrong")
+        self.answer.setText("%s\n%s" % (verdict, self.case.alg))
+        self.answer.setStyleSheet("color: %s; font-size: 20px; font-weight: 600;"
+                                  % ("#3ddc84" if right else theme.ACCENT))
+        self.next_btn.setVisible(True)
+        self.hub.save()
         self._stats()
 
     def reveal(self):
@@ -537,12 +821,22 @@ class TrainerView(QWidget):
         self.next()
 
     def _stats(self):
-        if self.trainer:
+        if self.trainer and self.mode == "quiz":
+            self.stats.setText(tr("quiz_stats") % (self.quiz_right, self.quiz_total))
+        elif self.trainer:
             due = self.hub.progress.due_count(self.trainer.cases)
             self.stats.setText(tr("session_stats") % (self.trainer.reviewed, due))
 
     def keyPressEvent(self, e):
         k = e.key()
+        if self.mode == "quiz":
+            if k in (Qt.Key_1, Qt.Key_2, Qt.Key_3, Qt.Key_4):
+                self.answer_quiz(k - Qt.Key_1)
+            elif k in (Qt.Key_Space, Qt.Key_Return, Qt.Key_Enter) and self.answered:
+                self.next()
+            elif k == Qt.Key_Escape:
+                self.stop()
+            return
         if k == Qt.Key_Space:
             self.reveal()
         elif k in (Qt.Key_1, Qt.Key_2, Qt.Key_3):
@@ -572,6 +866,10 @@ class TrainingWidget(QWidget):
         sv = QVBoxLayout(side)
         sv.setContentsMargins(10, 14, 10, 10)
         sv.setSpacing(6)
+        course = QLabel(tr("path").upper())
+        course.setObjectName("sectionTitle")
+        course.setContentsMargins(8, 0, 0, 0)
+        sv.addWidget(course)
         head = QHBoxLayout()
         self.path_combo = QComboBox()
         self.path_combo.setFocusPolicy(Qt.NoFocus)
@@ -579,11 +877,6 @@ class TrainingWidget(QWidget):
             self.path_combo.addItem(pick(learn.PATH_NAMES[pid]), pid)
         self.path_combo.currentIndexChanged.connect(self._path_changed)
         head.addWidget(self.path_combo, 1)
-        if standalone:
-            self.pin = _button("⤒", "icon", True)
-            self.pin.setToolTip(tr("pin_window"))
-            self.pin.toggled.connect(self._toggle_pin)
-            head.addWidget(self.pin)
         sv.addLayout(head)
         self.levels = QListWidget()
         self.levels.setObjectName("levels")
@@ -615,6 +908,10 @@ class TrainingWidget(QWidget):
         self.train_btn = _button("▶  " + tr("train"), "primary")
         self.train_btn.clicked.connect(self.train_level)
         bar.addWidget(self.train_btn)
+        self.quiz_btn = _button("?  " + tr("quiz"), "seg")
+        self.quiz_btn.setToolTip(tr("quiz_tip"))
+        self.quiz_btn.clicked.connect(lambda: self.train_level("quiz"))
+        bar.addWidget(self.quiz_btn)
         self.lesson_btn = _button(tr("mark_lesson"), "seg", True)
         self.lesson_btn.clicked.connect(self._toggle_lesson)
         bar.addWidget(self.lesson_btn)
@@ -670,6 +967,11 @@ class TrainingWidget(QWidget):
         self.empty.setObjectName("muted")
         self.empty.setAlignment(Qt.AlignCenter)
         self.content.addWidget(self.empty)
+        self.overview = OverviewView(hub)
+        self.overview.open_level.connect(self.select_level)
+        self.overview.review_due.connect(self._review_due)
+        self.content.addWidget(self.overview)
+        self._on_overview = False
         pv.addWidget(self.content, 1)
         self.stack.addWidget(page)
 
@@ -696,6 +998,9 @@ class TrainingWidget(QWidget):
         self.level = None
         self.levels.blockSignals(True)
         self.levels.clear()
+        ov = QListWidgetItem()
+        ov.setData(ROLE_ID, "overview")
+        self.levels.addItem(ov)
         tier = None
         for lv in learn.PATHS[pid]:
             if lv.tier != tier:
@@ -708,8 +1013,7 @@ class TrainingWidget(QWidget):
             it.setData(ROLE_ID, lv.id)
             self.levels.addItem(it)
         self.levels.blockSignals(False)
-        nxt = self.hub.progress.next_level(pid) or learn.PATHS[pid][0]
-        self.select_level(nxt.id)
+        self.select_level("overview")
 
     def select_level(self, level_id):
         for row in range(self.levels.count()):
@@ -719,9 +1023,36 @@ class TrainingWidget(QWidget):
                     self._level_changed(row)
                 return
 
+    def _show_overview(self):
+        self.level = None
+        self.stack.setCurrentIndex(0)
+        self.title.setText(pick(learn.PATH_NAMES[self.hub.path]))
+        self.subtitle.setText(pick(learn.PATH_DESCRIPTIONS.get(self.hub.path, ("", ""))))
+        for w in (self.train_btn, self.quiz_btn, self.lesson_btn, self.progress_lbl):
+            w.setVisible(False)
+        for b in list(self.view_btns.values()) + self.filter_btns:
+            b.setVisible(False)
+        self.overview.rebuild()
+        self.content.setCurrentWidget(self.overview)
+        self.detail.setVisible(False)
+        self._on_overview = True
+
+    def _review_due(self):
+        path = learn.PATHS[self.hub.path]
+        due = [c for lv in path if lv.set_id for c in lv.cases if self.hub.progress.is_due(c.id)]
+        if due:
+            self.stack.setCurrentIndex(1)
+            self._update_detail_visibility()
+            self.trainer.start(tr("due_title"), due)
+
     def _level_changed(self, row):
         if row < 0 or self.levels.item(row) is None:
             return
+        if self.levels.item(row).data(ROLE_ID) == "overview":
+            self._show_overview()
+            return
+        self._on_overview = False
+        self.progress_lbl.setVisible(True)
         lv = learn.LEVEL_BY_ID.get(self.levels.item(row).data(ROLE_ID))
         if lv is None:
             return
@@ -739,6 +1070,8 @@ class TrainingWidget(QWidget):
         for b in self.filter_btns:
             b.setVisible(has_cases)
         self.train_btn.setVisible(has_cases)
+        pictures = has_cases and lv.cases[0].view != "none"
+        self.quiz_btn.setVisible(pictures and len(lv.cases) >= 4)
         self.lesson_btn.setVisible(has_lesson)
         start_on_lesson = has_lesson and (not has_cases or not self.hub.progress.lesson_done(lv.lesson))
         idx = 0 if start_on_lesson else 1
@@ -758,13 +1091,16 @@ class TrainingWidget(QWidget):
 
     def _update_detail_visibility(self):
         """The case panel only makes sense next to the grid of cases."""
-        on_grid = self.stack.currentIndex() == 0 and self.content.currentIndex() != 0
+        on_grid = (self.stack.currentIndex() == 0 and self.content.currentIndex() in (1, 2)
+                   and not getattr(self, "_on_overview", False))
         self.detail.setVisible(on_grid)
         for b in self.filter_btns:
             b.setVisible(on_grid)
 
     def _trainer_closed(self):
         self.stack.setCurrentIndex(0)
+        if getattr(self, "_on_overview", False):
+            self.overview.rebuild()
         self._update_detail_visibility()
 
     def _filter_changed(self, idx):
@@ -801,15 +1137,12 @@ class TrainingWidget(QWidget):
             prog.set_lesson_done(self.level.lesson, not prog.lesson_done(self.level.lesson))
             self.hub.save()
 
-    def _toggle_pin(self, on):
-        w = self.window()
-        w.setWindowFlag(Qt.WindowStaysOnTopHint, on)
-        w.show()
-
     def refresh(self):
         self.levels.viewport().update()
         self.grid.viewport().update()
         self.detail.refresh()
+        if getattr(self, "_on_overview", False) and self.stack.currentIndex() == 0:
+            self.overview.rebuild()
         lv = self.level
         if lv is None:
             return
@@ -828,11 +1161,12 @@ class TrainingWidget(QWidget):
             self.lesson_btn.setChecked(d)
             self.lesson_btn.setText(tr("lesson_done") if d else tr("mark_lesson"))
 
-    def train_level(self):
+    def train_level(self, mode="review"):
         if self.level and self.level.set_id:
             self.stack.setCurrentIndex(1)
             self._update_detail_visibility()
-            self.trainer.start(pick(self.level.name), self.level.cases)
+            self.trainer.start(pick(self.level.name), self.level.cases,
+                               mode if isinstance(mode, str) else "review")
 
     def train_case(self, cid):
         case = algs.CASES.get(cid)
@@ -842,29 +1176,4 @@ class TrainingWidget(QWidget):
             self.trainer.start(pick(case.name), [case])
 
 
-class TrainingWindow(QMainWindow):
-    """A separate window with the Training section (multi-window mode)."""
-
-    def __init__(self, hub, icon=None, parent=None):
-        QMainWindow.__init__(self, parent)
-        self.setWindowTitle("Enigma Cube — " + tr("nav_training"))
-        if icon is not None:
-            self.setWindowIcon(icon)
-        central = QWidget()
-        central.setObjectName("central")
-        lay = QVBoxLayout(central)
-        lay.setContentsMargins(18, 16, 18, 18)
-        self.training = TrainingWidget(hub, standalone=True)
-        lay.addWidget(self.training)
-        self.setCentralWidget(central)
-        self.resize(1180, 760)
-        self.setAttribute(Qt.WA_DeleteOnClose, True)
-
-    def showEvent(self, e):
-        QMainWindow.showEvent(self, e)
-        if sys.platform.startswith("win"):
-            from .window import _dark_title_bar
-            _dark_title_bar(self)
-
-
-__all__ = ["TrainingHub", "TrainingWidget", "TrainingWindow"]
+__all__ = ["TrainingHub", "TrainingWidget"]

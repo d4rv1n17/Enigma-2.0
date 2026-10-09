@@ -108,6 +108,9 @@ def _run(folder):
 
         win.set_page(1)
         tw = win.training
+        tw._show_overview()
+        _grab(app, win, folder, "%s_05a_training_overview" % lang)
+        tw.select_level("notation")
         _grab(app, win, folder, "%s_05_training_notation" % lang)
         tw.select_level("beginner")
         _grab(app, win, folder, "%s_06_training_beginner" % lang)
@@ -141,6 +144,12 @@ def _run(folder):
         _grab(app, win, folder, "%s_11_trainer_revealed" % lang)
         tw.trainer.rate(2)
         tw.trainer.stop()
+        tw.select_level("pll")
+        tw.train_level("quiz")
+        _grab(app, win, folder, "%s_11a_quiz" % lang)
+        tw.trainer.answer_quiz(0)
+        _grab(app, win, folder, "%s_11b_quiz_answered" % lang)
+        tw.trainer.stop()
 
         win.set_page(2)
         ref = win.page_widgets[2]
@@ -150,11 +159,28 @@ def _run(folder):
         win.set_page(3)
         _grab(app, win, folder, "%s_14_achievements" % lang)
 
-        win.open_training_window()
-        extra = win.extra_windows[-1]
-        _grab(app, extra, folder, "%s_12_training_window" % lang)
-        extra.close()
         win.set_page(0)
+        win.windows_menu.popup(win.windows_btn.mapToGlobal(win.windows_btn.rect().bottomLeft()))
+        _pump(app)
+        _grab(app, win.windows_menu, folder, "%s_12_windows_menu" % lang)
+        before = len(win.store.current.solves)
+        win.windows_menu.hide()
+        for kind in ("training", "reference", "achievements", "timer"):
+            extra = win.open_window(kind)
+            if kind == "timer":
+                extra._press(Qt.Key_Space, False)
+                extra.state = 2          # READY: shows the green zero
+                extra._render()
+                _grab(app, extra, folder, "%s_12_window_timer_ready" % lang)
+                extra._release(Qt.Key_Space, False)
+                extra.t_start -= 9.87
+                extra._stop()
+                extra._release(Qt.Key_Space, False)
+            _grab(app, extra, folder, "%s_12_window_%s" % (lang, kind))
+            extra.close()
+            _pump(app)
+        if len(win.store.current.solves) != before + 1:
+            raise AssertionError("mini timer did not save the solve")
         win.close()
         _pump(app)
 

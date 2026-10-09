@@ -1,4 +1,4 @@
-# Enigma Cube Timer 3.0
+# Enigma Cube Timer 3.1
 
 A speedcubing timer for Windows, built with Python and PyQt5. It works fully offline.
 
@@ -6,7 +6,7 @@ Enigma Cube generates WCA-style scrambles and shows a preview of each one. It ti
 
 ## Features
 
-### Training (new in 3.0)
+### Training
 - **Courses for all 14 events, from beginner to advanced.** Levels are marked *beginner*, *intermediate* and *advanced*:
 
   | Event | Methods |
@@ -28,13 +28,16 @@ Enigma Cube generates WCA-style scrambles and shows a preview of each one. It ti
   - 3x3: OLL, PLL with arrows, F2L in 3D, CMLL corners;
   - 2x2 views and 4x4 views;
   - Pyraminx, Skewb and Square-1 diagrams.
+- **Course overview:** a progress bar for the whole course, the next step to take and how many cases are due for review.
+- **Detailed case pages:** move count, what the algorithm does (e.g. "cycles 3 edges"), how the case looks before the algorithm, and verified alternative algorithms for 78 popular cases.
+- **Recognition quiz:** see a case and pick its name from four options (keys 1–4).
 - **Spaced-repetition trainer:**
   - Recognise the case, solve it on your cube, reveal the algorithm and rate yourself (1–3).
   - Cases move through Leitner boxes: review now, then after 1 day, 3, 7, 16 and 35 days.
   - New cases are introduced 4 at a time.
 - **Notation reference** for every puzzle, with pictures of each move drawn by the built-in simulators.
 - **40 achievements** for solving (counts, sub-X singles and averages), learning (lessons and algorithm sets) and regular practice (day streaks).
-- **Multi-window mode:** open Training in its own window (**⧉**) next to the timer. Pin it on top of other windows if you like.
+- **Multi-window mode:** the **Windows** menu opens any section in its own window: a compact mini timer (**Ctrl+T**), Training, Reference or Achievements (**Ctrl+Shift+1/2/3**). Pin any window on top of the others. Solves from the mini timer go into your current session.
 
 ### Timer and statistics
 
@@ -65,7 +68,7 @@ Enigma Cube generates WCA-style scrambles and shows a preview of each one. It ti
 
 ## Install
 
-1. Download `EnigmaCube-Setup-3.0.exe` and run it.
+1. Download `EnigmaCube-Setup-3.1.exe` and run it.
 2. If Windows shows **"Windows protected your PC"**, click **More info → Run anyway**. Windows shows this for new apps that don't have a paid code-signing certificate.
 3. Choose the folder and shortcuts, then click **Install**. If an older version is installed, the button says **Update**.
 
@@ -111,7 +114,7 @@ python main.py
    - builds the uninstaller;
    - packs the app;
    - creates the setup.
-3. When it finishes, the `Output` folder opens with `EnigmaCube-Setup-3.0.exe` inside.
+3. When it finishes, the `Output` folder opens with `EnigmaCube-Setup-3.1.exe` inside.
 
 **Build on GitHub Actions:** every push and pull request builds the installer automatically. Download it from **Actions → Build Windows installer → EnigmaCube-Setup**. If you push a tag such as `v3.0`, the installer is also attached to a GitHub Release.
 
@@ -151,6 +154,13 @@ tests/                   unit tests (scrambles, stats, every algorithm, setup lo
 ```
 
 ## Changelog
+
+### 3.1: clearer UI, deeper training, any window
+- **Windows** menu: open the mini timer, Training, Reference or Achievements in separate windows, and pin them on top.
+- New **mini timer** window that saves solves into the current session.
+- Training: course overview page, recognition quiz, facts for each case (move count, what it does, starting position) and verified alternative algorithms.
+- New lessons: cross, finger tricks, look-ahead and Roux.
+- Clearer timer screen: an empty-state message for new sessions, a key hint, and visible arrows on drop-down lists.
 
 ### 3.0: Training
 - A new **Training** section with courses for all 14 events, from beginner to advanced. It includes lessons, 342 algorithm cases verified by simulators and a spaced-repetition trainer.

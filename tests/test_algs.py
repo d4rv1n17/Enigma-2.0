@@ -125,6 +125,23 @@ class AlgorithmTest(unittest.TestCase):
         self.assertEqual(len(arrows), 2)  # two edge swaps
 
 
+class AlternativesTest(unittest.TestCase):
+    def test_alternatives_solve_the_same_case(self):
+        for cid, alts in algs.ALTS.items():
+            case = algs.CASES[cid]
+            key = oll_mask if case.view == "oll" else (lambda s: s.key())
+            main = family(case.alg, key)
+            for alt in alts:
+                self.assertTrue(f2l_solved(State().apply(alt).normalize()), (cid, alt))
+                self.assertTrue(family(alt, key) & main, (cid, alt))
+
+    def test_facts(self):
+        from enigma_timer import insights
+        facts = insights.facts(algs.CASES["pll-Ua"])
+        self.assertIn("3", facts[1][0])
+        self.assertTrue(all(len(f) == 2 for c in algs.CASES.values() for f in insights.facts(c)))
+
+
 class LearnTest(unittest.TestCase):
     def test_leitner(self):
         p = learn.Progress({})
@@ -155,7 +172,7 @@ class LearnTest(unittest.TestCase):
         self.assertEqual(p.next_level().id, "beginner")
         for c in learn.LEVEL_BY_ID["beginner"].cases:
             p.set_status(c.id, learn.LEARNED)
-        self.assertEqual(p.next_level().id, "oll2")
+        self.assertEqual(p.next_level().id, "cross")
 
 
 if __name__ == "__main__":

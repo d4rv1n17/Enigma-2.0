@@ -1,6 +1,12 @@
 """Colours and the application style sheet."""
 
+import os
+import sys
+
 from PyQt5.QtGui import QFontDatabase
+
+_ROOT = getattr(sys, "_MEIPASS", None) or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CHEVRON = os.path.join(_ROOT, "assets", "chevron.png").replace("\\", "/")
 
 # Colours sampled from the Enigma Cube logo
 BG = "#121111"          # logo background
@@ -83,6 +89,20 @@ QPushButton#event { font-size: 14px; font-weight: 600; padding: 7px 12px; color:
                     background: %(PANEL2)s; border-radius: 9px; }
 QPushButton#event:hover { background: #2b2929; }
 QPushButton#event::menu-indicator { image: none; width: 0; }
+QPushButton#windows { font-size: 14px; font-weight: 600; padding: 7px 12px; color: %(MUTED)s;
+                      background: transparent; border-radius: 9px; }
+QPushButton#windows:hover { background: %(PANEL2)s; color: %(TEXT)s; }
+QPushButton#windows::menu-indicator { image: none; width: 0; }
+QLabel#keycap { background: %(PANEL2)s; color: %(TEXT)s; border-radius: 6px; padding: 2px 8px;
+                font-size: 12px; font-weight: 600; }
+QLabel#empty { color: %(MUTED)s; font-size: 13px; }
+QPushButton#pin { padding: 4px 10px; font-size: 12px; color: %(MUTED)s; border-radius: 8px; }
+QPushButton#pin:hover { color: %(TEXT)s; background: %(PANEL2)s; }
+QPushButton#pin:checked { color: #111; background: %(ACCENT)s; }
+QPushButton#steprow { background: %(PANEL)s; border-radius: 12px; padding: 0; text-align: left; }
+QPushButton#steprow:hover { background: %(PANEL2)s; }
+QProgressBar { background: %(BORDER)s; border: none; border-radius: 3px; }
+QProgressBar::chunk { background: %(ACCENT)s; border-radius: 3px; }
 QPushButton#nav { font-size: 15px; font-weight: 600; padding: 6px 12px; color: %(MUTED)s; }
 QPushButton#nav:hover { background: transparent; color: %(TEXT)s; }
 QPushButton#nav:checked { color: %(TEXT)s; background: %(PANEL2)s; }
@@ -118,7 +138,8 @@ QToolButton::menu-indicator { image: none; }
 QComboBox { background: transparent; border: none; border-radius: 8px;
             padding: 5px 8px; font-weight: 600; font-size: 15px; }
 QComboBox:hover { background: %(PANEL2)s; }
-QComboBox::drop-down { border: none; width: 18px; }
+QComboBox::drop-down { border: none; width: 22px; }
+QComboBox::down-arrow { image: url(%(CHEVRON)s); width: 10px; height: 6px; }
 QComboBox QAbstractItemView { background: %(PANEL2)s; border: none; padding: 4px;
             selection-background-color: %(ACCENT)s; selection-color: #111; outline: 0; }
 QDialog QComboBox { background: %(BG)s; font-size: 14px; font-weight: 400; }
@@ -157,4 +178,4 @@ QSlider::handle:horizontal { background: %(TEXT)s; width: 14px; margin: -5px 0;
 QSlider::sub-page:horizontal { background: %(ACCENT)s; border-radius: 2px; }
 """ % dict(fam=fam, BG=BG, PANEL=PANEL, PANEL2=PANEL2, BORDER=BORDER, TEXT=TEXT,
            MUTED=MUTED, FAINT=FAINT, ACCENT=ACCENT, ACCENT_DARK=ACCENT_DARK,
-           SCRAMBLE=SCRAMBLE)
+           SCRAMBLE=SCRAMBLE, CHEVRON=CHEVRON)

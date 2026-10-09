@@ -205,7 +205,7 @@ _a("r1000", TRAINING, "×1K", ("Muscle memory", "Мышечная память")
    ("1000 reviews in the trainer.", "1000 повторений в тренажёре."),
    lambda ctx: (min(ctx.reviews, 1000), 1000))
 _a("windows", TRAINING, "⧉", ("Multitasker", "Многозадачность"),
-   ("Open Training in a separate window.", "Открой тренировку в отдельном окне."),
+   ("Open any section in a separate window.", "Открой любой раздел в отдельном окне."),
    _flag("training_window"))
 _a("reference", TRAINING, "?", ("Curious", "Любопытство"),
    ("Open the notation reference.", "Открой справочник нотации."), _flag("reference"))

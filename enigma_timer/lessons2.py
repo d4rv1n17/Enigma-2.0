@@ -319,3 +319,120 @@ start with the Sune, Anti Sune and Pi groups.</p>""",
 <p>Совет: учи CMLL по группам (O, H, Pi, U, T, Sune, Anti Sune, L). Если знаешь OLL в 2 этапа,
 начни с групп Sune, Anti Sune и Pi.</p>""",
 }
+
+L["cross"] = {
+    "en": """<h2>The cross: plan it during inspection</h2>
+<p>Fast solvers plan the whole cross in the 15 seconds of inspection and do it on the
+<b>bottom</b>, so they can already look for the first F2L pair.</p>
+<ol>
+<li><b>Find the four white edges</b> and their side colours before you touch the cube.</li>
+<li><b>Solve edges relative to each other,</b> not to the centres: two edges that are opposite
+    (white-green and white-blue) or next to each other must keep that relation. One final
+    D move then lines all of them up.</li>
+<li><b>Aim for 8 moves or fewer.</b> Every cross can be solved in at most 8 moves.</li>
+<li><b>Do it upside down:</b> practise building the cross on the bottom from the start.</li>
+</ol>
+<h3>Drills</h3>
+<ul>
+<li>Scramble, inspect for 15 seconds, then solve the cross <b>blindfolded</b> (eyes closed).</li>
+<li>Count your moves; try again with a shorter plan.</li>
+<li>Later: learn to use any colour (colour neutrality) — it gives easier crosses.</li>
+</ul>""",
+    "ru": """<h2>Крест: планируй на инспекции</h2>
+<p>Быстрые сборщики продумывают весь крест за 15 секунд инспекции и собирают его
+<b>снизу</b>, чтобы сразу искать первую пару F2L.</p>
+<ol>
+<li><b>Найди все четыре белых ребра</b> и их боковые цвета, ещё не трогая куб.</li>
+<li><b>Ставь рёбра относительно друг друга,</b> а не центров: противоположные рёбра
+    (бело-зелёное и бело-синее) или соседние должны сохранять это положение. В конце
+    один ход D выровняет все сразу.</li>
+<li><b>Цель — не больше 8 ходов.</b> Любой крест решается максимум за 8 ходов.</li>
+<li><b>Собирай снизу:</b> с самого начала тренируй крест на нижней грани.</li>
+</ol>
+<h3>Упражнения</h3>
+<ul>
+<li>Скрамбл, 15 секунд инспекции, затем крест <b>с закрытыми глазами</b>.</li>
+<li>Считай ходы и попробуй найти план короче.</li>
+<li>Позже: научись начинать с любого цвета (цветовая нейтральность) — кресты станут проще.</li>
+</ul>""",
+}
+
+L["fingertricks"] = {
+    "en": """<h2>Finger tricks</h2>
+<p>Speed comes from turning with your fingers instead of re-gripping the cube.</p>
+<ul>
+<li><b>Home grip:</b> thumbs on the front, index fingers on top, the rest of the fingers
+    behind. Hold the cube loosely.</li>
+<li><b>U:</b> push the back-right of the top layer with your right index finger.
+    <b>U'</b>: the same with the left index finger.</li>
+<li><b>R / R':</b> turn with the right wrist, not the whole arm. Keep the thumb on the front.</li>
+<li><b>F:</b> right thumb pushes up the front, or index finger pulls from the top.</li>
+<li><b>D:</b> left ring finger pulls the bottom layer towards you.</li>
+<li><b>M':</b> push the middle slice up with the left ring finger (used in Roux and OLL).</li>
+</ul>
+<h3>How to practise</h3>
+<ul>
+<li>Take an algorithm you know (Sune: R U R' U R U2 R') and repeat it 20 times without
+    looking, slowly and without pauses. Then a bit faster.</li>
+<li>Smooth turning without pauses beats fast turning with pauses.</li>
+</ul>""",
+    "ru": """<h2>Фингертрики</h2>
+<p>Скорость появляется, когда крутишь пальцами, а не перехватываешь куб.</p>
+<ul>
+<li><b>Базовый хват:</b> большие пальцы спереди, указательные сверху, остальные сзади.
+    Держи куб свободно.</li>
+<li><b>U:</b> толкни верхний слой сзади справа правым указательным пальцем.
+    <b>U'</b>: то же левым указательным.</li>
+<li><b>R / R':</b> поворот кистью, а не всей рукой. Большой палец остаётся спереди.</li>
+<li><b>F:</b> правый большой палец толкает переднюю грань вверх, или указательный тянет сверху.</li>
+<li><b>D:</b> левый безымянный палец тянет нижний слой к себе.</li>
+<li><b>M':</b> левый безымянный толкает средний слой вверх (нужно в Roux и OLL).</li>
+</ul>
+<h3>Как тренировать</h3>
+<ul>
+<li>Возьми знакомый алгоритм (Суне: R U R' U R U2 R') и повтори его 20 раз не глядя —
+    медленно и без пауз. Потом чуть быстрее.</li>
+<li>Плавная сборка без пауз быстрее, чем резкая с остановками.</li>
+</ul>""",
+}
+
+L["lookahead"] = {
+    "en": """<h2>Look-ahead and a practice plan</h2>
+<p><b>Look-ahead</b> means finding the next F2L pair while you are still inserting the
+current one. It is the biggest difference between 30 and 15 seconds.</p>
+<ol>
+<li><b>Slow solves:</b> solve so slowly that you never stop. If you stop to look, go slower.</li>
+<li><b>Watch the pieces, not your hands.</b> During an insertion your eyes should already
+    move to the rest of the cube.</li>
+<li><b>Fewer cube rotations:</b> learn F2L cases from the back slots too, so you can keep
+    tracking pieces.</li>
+</ol>
+<h3>A simple weekly plan</h3>
+<ul>
+<li>Every day: 10 minutes of algorithm review in the trainer (it shows what is due).</li>
+<li>Every day: one session of 50 solves in the timer — watch your ao12, not single times.</li>
+<li>Twice a week: 10 slow look-ahead solves and 10 blindfolded crosses.</li>
+<li>Learn 3–4 new cases a day at most — the trainer introduces them for you.</li>
+</ul>
+<p>Typical milestones: sub-60 with the beginner method, sub-30 with 2-look OLL/PLL and F2L,
+sub-20 with full OLL/PLL and good look-ahead.</p>""",
+    "ru": """<h2>Look-ahead и план тренировок</h2>
+<p><b>Look-ahead</b> — умение искать следующую пару F2L, пока вставляешь текущую. Это главное,
+что отличает 30 секунд от 15.</p>
+<ol>
+<li><b>Медленные сборки:</b> собирай так медленно, чтобы ни разу не остановиться. Если
+    остановился посмотреть — собирай ещё медленнее.</li>
+<li><b>Следи за деталями, а не за руками.</b> Пока вставляешь пару, глаза уже ищут следующую.</li>
+<li><b>Меньше поворотов куба:</b> выучи случаи F2L и для задних слотов, чтобы не терять детали
+    из виду.</li>
+</ol>
+<h3>Простой план на неделю</h3>
+<ul>
+<li>Каждый день: 10 минут повторения в тренажёре (он сам покажет, что пора повторить).</li>
+<li>Каждый день: сессия из 50 сборок в таймере — смотри на ao12, а не на синглы.</li>
+<li>Два раза в неделю: 10 медленных сборок на look-ahead и 10 крестов вслепую.</li>
+<li>Не больше 3–4 новых случаев в день — тренажёр сам вводит их постепенно.</li>
+</ul>
+<p>Обычные ориентиры: быстрее 60 секунд — метод для начинающих, быстрее 30 — OLL и PLL в 2 этапа
+плюс F2L, быстрее 20 — полный OLL/PLL и хороший look-ahead.</p>""",
+}

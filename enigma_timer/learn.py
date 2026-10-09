@@ -66,6 +66,12 @@ L333 = [
     _lv("beginner", ("Beginner method", "Метод для начинающих"),
         ("Solve the cube for the first time", "Собери куб в первый раз"),
         set_id="beginner", lesson="beginner"),
+    _lv("cross", ("Cross planning", "Крест: планирование"),
+        ("Plan the whole cross in inspection", "Весь крест — на инспекции"),
+        lesson="cross", tier=INTERMEDIATE),
+    _lv("fingertricks", ("Finger tricks", "Фингертрики"),
+        ("Turn with fingers, not wrists", "Крути пальцами, а не кистями"),
+        lesson="fingertricks", tier=INTERMEDIATE),
     _lv("oll2", ("2-look OLL", "OLL в 2 этапа"),
         ("10 algorithms for a yellow top", "10 алгоритмов для жёлтого верха"),
         set_id="oll2", lesson="cfop", tier=INTERMEDIATE),
@@ -75,6 +81,8 @@ L333 = [
     _lv("f2l", ("F2L", "F2L"),
         ("41 cases, two layers at once", "41 случай: два слоя сразу"),
         set_id="f2l", lesson="f2l", tier=INTERMEDIATE),
+    _lv("lookahead", ("Look-ahead & practice plan", "Look-ahead и план тренировок"),
+        ("From 30 to 15 seconds", "От 30 к 15 секундам"), lesson="lookahead", tier=INTERMEDIATE),
     _lv("oll", ("Full OLL", "Полный OLL"),
         ("57 cases, last layer orientation in one look",
          "57 случаев: ориентация за один взгляд"), set_id="oll", tier=ADVANCED),
@@ -163,6 +171,34 @@ PATHS = {
 # order of the puzzles in the Training selector
 PATH_ORDER = ["333", "222", "444", "pyram", "skewb", "minx", "sq1", "clock",
               "333bf", "333oh", "333fm"]
+PATH_DESCRIPTIONS = {
+    "333": ("From your first solve to the Fridrich (CFOP) method used by most speedcubers, "
+            "plus Roux for those who want an alternative.",
+            "От первой сборки до метода Фридрих (CFOP), которым пользуется большинство "
+            "спидкуберов, и Roux как альтернатива."),
+    "222": ("A 2x2 is a 3x3 without edges: start layer by layer, then Ortega, then CLL.",
+            "2x2 — это 3x3 без рёбер: сначала послойно, затем Ортега, затем CLL."),
+    "444": ("Big cubes are reduced to a 3x3: centres, edge pairs, then the 3x3 you know, "
+            "plus the parity cases.",
+            "Большие кубы сводятся к 3x3: центры, пары рёбер, затем знакомый 3x3 и паритеты."),
+    "pyram": ("Pyraminx is quick to learn: tips, centres and a few edge algorithms.",
+              "Пирамидка учится быстро: вершины, центры и несколько алгоритмов для рёбер."),
+    "skewb": ("Skewb turns around corners. One layer by intuition, then a few algorithms.",
+              "Скьюб крутится вокруг углов. Один слой интуитивно, затем несколько алгоритмов."),
+    "minx": ("Megaminx is solved like a big 3x3, face after face.",
+             "Мегаминкс собирается как большой 3x3, грань за гранью."),
+    "sq1": ("Square-1 changes shape: first get it back to a cube, then solve it.",
+            "Square-1 меняет форму: сначала верни ему форму куба, потом собери."),
+    "clock": ("Clock has no layers: set the pins, turn the dials, bring every clock to 12.",
+              "У Clock нет слоёв: ставь штырьки, крути колёса, своди все часы на 12."),
+    "333bf": ("Memorise the cube, then solve it without looking.",
+              "Запомни куб и собери его, не глядя."),
+    "333oh": ("CFOP with one hand: the same algorithms with different finger tricks.",
+              "CFOP одной рукой: те же алгоритмы, другие фингертрики."),
+    "333fm": ("Find the shortest solution you can with pen and paper.",
+              "Найди самое короткое решение с ручкой и бумагой."),
+}
+
 PATH_NAMES = {
     "333": ("3x3 · Fridrich (CFOP)", "3x3 · Фридрих (CFOP)"),
     "222": ("2x2 · Ortega, CLL", "2x2 · Ортега, CLL"),
@@ -256,6 +292,15 @@ class Progress(object):
     def level_done(self, level):
         a, b = self.level_counts(level)
         return a >= b
+
+    def course_counts(self, path_id):
+        """(done, total) over every step of a course (lesson = 1 item, set = its cases)."""
+        done = total = 0
+        for lv in PATHS.get(path_id, []):
+            a, b = self.level_counts(lv)
+            done += a
+            total += b
+        return done, total
 
     def next_level(self, path="333"):
         for lv in PATHS.get(path, L333):
