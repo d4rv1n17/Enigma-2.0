@@ -25,15 +25,24 @@ jobs:
         run: python -m pip install -r requirements.txt pyinstaller
       - name: Run tests
         run: python -m unittest discover -s tests
+      - name: Do not show Windows error dialogs (they would hang the job)
+        shell: pwsh
+        run: |
+          New-Item -Force -Path "HKCU:\Software\Microsoft\Windows\Windows Error Reporting" | Out-Null
+          Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\Windows Error Reporting" -Name DontShowUI -Value 1 -Type DWord
       - name: GUI self-test (source)
+        timeout-minutes: 5
         run: python main.py --selftest screenshots
       - name: Build installer
         run: python installer/build.py
       - name: GUI self-test (built exe)
+        timeout-minutes: 5
         shell: pwsh
         run: |
-          $p = Start-Process -FilePath "dist\EnigmaCube\EnigmaCube.exe" -ArgumentList "--selftest", "$PWD\screenshots_exe" -Wait -PassThru
-          if ($p.ExitCode -ne 0) { Get-Content screenshots_exe\error.txt -ErrorAction SilentlyContinue; exit 1 }
+          $p = Start-Process -FilePath "dist\EnigmaCube\EnigmaCube.exe" -ArgumentList "--selftest", "$PWD\screenshots_exe" -PassThru
+          if (-not $p.WaitForExit(180000)) { Stop-Process -Id $p.Id -Force; "self-test timed out"; Get-Content screenshots_exe\steps.txt -ErrorAction SilentlyContinue; exit 1 }
+          Get-Content screenshots_exe\steps.txt -Tail 3 -ErrorAction SilentlyContinue
+          if ($p.ExitCode -ne 0) { Get-Content screenshots_exe\error.txt, screenshots_exe\fault.txt -ErrorAction SilentlyContinue; exit 1 }
       - name: Size report
         shell: pwsh
         run: |
