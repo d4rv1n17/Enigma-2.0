@@ -18,8 +18,11 @@ from PyQt5.QtWidgets import (QApplication, QButtonGroup, QCheckBox, QFileDialog,
                              QHBoxLayout, QLabel, QLineEdit, QProgressBar, QPushButton,
                              QStackedWidget, QVBoxLayout, QWidget)
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import setup_core as core  # noqa: E402
+try:  # imported from the app (EnigmaCube.exe --uninstall)
+    from . import setup_core as core
+except ImportError:  # run as the setup script
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import setup_core as core  # noqa: E402
 
 ACCENT = "#f4cc0c"
 
@@ -448,7 +451,7 @@ class SetupWindow(QWidget):
             target = self.install_dir
 
             def job(progress):
-                return core.install(payload, target, desktop, None, progress, existing)
+                return core.install(payload, target, desktop, progress, existing)
         else:
             target = self.install_dir
             delete_data = self.cb_data.isChecked()
@@ -508,28 +511,32 @@ class SetupWindow(QWidget):
             QWidget.keyPressEvent(self, e)
 
 
+TEMP_PREFIX = "EnigmaCube-uninstall-"
+
+
 def _schedule_self_delete():
-    """A temp copy of the uninstaller deletes itself after it exits."""
+    """The temporary copy used for uninstalling removes itself after it exits."""
     if not core.IS_WIN or not getattr(sys, "frozen", False):
         return
-    exe = sys.executable
-    if os.path.dirname(exe).lower() != tempfile.gettempdir().lower():
+    folder = os.path.dirname(sys.executable)
+    if not os.path.basename(folder).startswith(TEMP_PREFIX):
         return
-    subprocess.Popen('cmd /c ping 127.0.0.1 -n 4 > nul & del /f /q "%s"' % exe,
+    subprocess.Popen('cmd /c ping 127.0.0.1 -n 4 > nul & rmdir /s /q "%s"' % folder,
                      shell=True, creationflags=core.NO_WINDOW)
 
 
 def _relaunch_from_temp(install_dir, quiet):
-    """uninstall.exe cannot delete itself while running: run a temp copy instead."""
-    src = sys.executable
-    dst = os.path.join(tempfile.gettempdir(), "EnigmaCube-uninstall-%d.exe" % os.getpid())
-    shutil.copy2(src, dst)
-    args = [dst, "--uninstall", "--dir", install_dir] + (["--quiet"] if quiet else [])
-    subprocess.Popen(args, close_fds=True)
+    """The program cannot delete its own files while running, so the removal
+    runs from a temporary copy of the program folder."""
+    tmp = os.path.join(tempfile.gettempdir(), TEMP_PREFIX + str(os.getpid()))
+    shutil.copytree(install_dir, tmp)
+    exe = os.path.join(tmp, os.path.basename(sys.executable))
+    args = [exe, "--uninstall", "--dir", install_dir] + (["--quiet"] if quiet else [])
+    subprocess.Popen(args, cwd=tmp, close_fds=True)
 
 
-def main():
-    argv = sys.argv[1:]
+def main(argv=None):
+    argv = sys.argv[1:] if argv is None else argv
     uninstall = "--uninstall" in argv
     quiet = "--quiet" in argv
     install_dir = None
@@ -540,7 +547,7 @@ def main():
         here = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else None
         if install_dir is None:
             install_dir = here or core.default_install_dir()
-            if here and getattr(sys, "frozen", False) and core.IS_WIN:
+            if here and core.IS_WIN:
                 _relaunch_from_temp(install_dir, quiet)
                 return 0
         if quiet:

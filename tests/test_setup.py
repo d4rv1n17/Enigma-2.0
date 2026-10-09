@@ -26,7 +26,7 @@ class SetupCoreTest(unittest.TestCase):
         tmp = tempfile.mkdtemp()
         target = os.path.join(tmp, "Programs", "Enigma Cube")
         p1 = make_payload(tmp, {"EnigmaCube.exe": b"v1", "_internal/a.dll": b"a",
-                                "_internal/old.dll": b"o", "uninstall.exe": b"u"})
+                                "_internal/old.dll": b"o"})
         self.assertEqual(core.payload_info(p1)[0], "9.9")
         core.install(p1, target, desktop_shortcut=False)
         self.assertTrue(os.path.exists(os.path.join(target, "_internal", "old.dll")))
@@ -34,8 +34,7 @@ class SetupCoreTest(unittest.TestCase):
         with open(os.path.join(target, "notes.txt"), "w") as f:
             f.write("mine")
         os.remove(p1)
-        p2 = make_payload(tmp, {"EnigmaCube.exe": b"v2", "_internal/a.dll": b"a2",
-                                "uninstall.exe": b"u"}, "10.0")
+        p2 = make_payload(tmp, {"EnigmaCube.exe": b"v2", "_internal/a.dll": b"a2"}, "10.0")
         core.install(p2, target, desktop_shortcut=False)
         with open(os.path.join(target, "EnigmaCube.exe"), "rb") as f:
             self.assertEqual(f.read(), b"v2")

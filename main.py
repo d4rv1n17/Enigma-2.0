@@ -19,6 +19,15 @@ from enigma_timer.window import MainWindow  # noqa: E402
 
 
 def main():
+    if "--selftest" in sys.argv:
+        from enigma_timer import selftest
+        i = sys.argv.index("--selftest")
+        folder = sys.argv[i + 1] if i + 1 < len(sys.argv) else "selftest"
+        sys.exit(selftest.run(folder))
+    if "--uninstall" in sys.argv:
+        # Settings -> Apps -> Enigma Cube -> Uninstall runs "EnigmaCube.exe --uninstall"
+        from installer import setup_app
+        sys.exit(setup_app.main())
     if hasattr(Qt, "AA_EnableHighDpiScaling"):
         QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
     if hasattr(Qt, "AA_UseHighDpiPixmaps"):

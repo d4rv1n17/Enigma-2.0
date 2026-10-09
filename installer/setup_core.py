@@ -16,7 +16,6 @@ import zipfile
 APP_NAME = "Enigma Cube"
 APP_EXE = "EnigmaCube.exe"
 PUBLISHER = "Enigma Studio"
-UNINSTALL_EXE = "uninstall.exe"
 MANIFEST = "install_manifest.txt"
 REG_KEY = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\EnigmaCube"
 # Inno Setup installer used by version 2.2 (removed silently when updating)
@@ -106,15 +105,15 @@ def write_registry(install_dir, version, size_bytes):
     if wr is None:
         return
     with wr.CreateKey(wr.HKEY_CURRENT_USER, REG_KEY) as k:
-        uninst = os.path.join(install_dir, UNINSTALL_EXE)
+        app = os.path.join(install_dir, APP_EXE)
         values = {
             "DisplayName": APP_NAME,
             "DisplayVersion": version,
             "Publisher": PUBLISHER,
             "DisplayIcon": os.path.join(install_dir, APP_EXE),
             "InstallLocation": install_dir,
-            "UninstallString": '"%s" --uninstall' % uninst,
-            "QuietUninstallString": '"%s" --uninstall --quiet' % uninst,
+            "UninstallString": '"%s" --uninstall' % app,
+            "QuietUninstallString": '"%s" --uninstall --quiet' % app,
         }
         for name, val in values.items():
             wr.SetValueEx(k, name, 0, wr.REG_SZ, val)
@@ -177,9 +176,12 @@ def remove_shortcuts():
 
 
 def close_running_app():
+    """Close Enigma Cube if it is open (never this process: when uninstalling,
+    this process is itself a copy of EnigmaCube.exe)."""
     if not IS_WIN:
         return
-    subprocess.run(["taskkill", "/IM", APP_EXE, "/F"], creationflags=NO_WINDOW,
+    subprocess.run(["taskkill", "/F", "/FI", "IMAGENAME eq %s" % APP_EXE,
+                    "/FI", "PID ne %d" % os.getpid()], creationflags=NO_WINDOW,
                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
 
 
@@ -251,8 +253,8 @@ def remove_installed_files(install_dir, progress=None):
         pass
 
 
-def install_files(payload_path, install_dir, self_exe=None, progress=None):
-    """Extract the program, copy the uninstaller, write the manifest."""
+def install_files(payload_path, install_dir, progress=None):
+    """Extract the program and write the manifest of installed files."""
     if os.path.isdir(install_dir):
         remove_installed_files(install_dir)
     else:
@@ -274,21 +276,17 @@ def install_files(payload_path, install_dir, self_exe=None, progress=None):
             written.append(rel)
             if progress:
                 progress(i + 1, total, rel)
-    if self_exe and os.path.exists(self_exe):
-        shutil.copy2(self_exe, os.path.join(install_dir, UNINSTALL_EXE))
-        written.append(UNINSTALL_EXE)
     with io.open(os.path.join(install_dir, MANIFEST), "w", encoding="utf-8") as f:
         f.write("\n".join(written) + "\n")
     return written
 
 
-def install(payload_path, install_dir, desktop_shortcut=True, self_exe=None, progress=None,
-            existing=None):
+def install(payload_path, install_dir, desktop_shortcut=True, progress=None, existing=None):
     version, size = payload_info(payload_path)
     if existing and existing.get("inno_uninstall"):
         run_old_uninstaller(existing["inno_uninstall"])
     close_running_app()
-    install_files(payload_path, install_dir, self_exe, progress)
+    install_files(payload_path, install_dir, progress)
     create_shortcuts(install_dir, desktop_shortcut)
     write_registry(install_dir, version, size)
     return version
