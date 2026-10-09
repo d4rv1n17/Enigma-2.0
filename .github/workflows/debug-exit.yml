@@ -2,32 +2,56 @@ name: Debug exit crash
 on:
   push:
     branches: [debug-exit]
+permissions:
+  contents: write
 jobs:
   probe:
     runs-on: windows-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        menu: ["none", "popgrab", "pop", "event", "close", "keep"]
-    name: "menu=${{ matrix.menu }}"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - run: python -m pip install -r requirements.txt
-      - name: No error dialogs
+      - name: Dumps on
         shell: pwsh
         run: |
           New-Item -Force -Path "HKCU:\Software\Microsoft\Windows\Windows Error Reporting" | Out-Null
           Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\Windows Error Reporting" -Name DontShowUI -Value 1 -Type DWord
+          $k = "HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps"
+          New-Item -Force -Path $k | Out-Null
+          New-ItemProperty -Force -Path $k -Name DumpFolder -Value "C:\dumps" -PropertyType ExpandString | Out-Null
+          New-ItemProperty -Force -Path $k -Name DumpType -Value 2 -PropertyType DWord | Out-Null
+          New-Item -ItemType Directory -Force C:\dumps | Out-Null
       - name: selftest
         id: st
         continue-on-error: true
         timeout-minutes: 5
         env:
-          ET_MENU: ${{ matrix.menu }}
+          ET_MENU: none
         run: python main.py --selftest shots
-      - name: CRASHED
-        if: steps.st.outcome == 'failure'
-        run: echo crashed
+      - name: Analyse
+        if: always()
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force out | Out-Null
+          "outcome: ${{ steps.st.outcome }}" | Out-File out\result.txt
+          Get-ChildItem C:\dumps | Out-File -Append out\result.txt
+          Copy-Item shots\fault.txt, shots\steps.txt out -ErrorAction SilentlyContinue
+          $cdb = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\cdb.exe" -ErrorAction SilentlyContinue
+          "cdb: $cdb" | Out-File -Append out\result.txt
+          $d = Get-ChildItem C:\dumps\*.dmp | Select-Object -First 1
+          if ($d -and $cdb) {
+            & $cdb.FullName -z $d.FullName -c ".exr -1; .ecxr; kn 60; ~*kn 30; lm; q" 2>&1 | Out-File out\stack.txt
+          }
+      - name: Publish
+        if: always()
+        shell: pwsh
+        run: |
+          Set-Location out
+          git init -q
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          git commit -qm "debug results"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:debug-results
