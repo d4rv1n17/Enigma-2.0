@@ -221,28 +221,76 @@ EO_2LOOK = [
 # Model
 # ---------------------------------------------------------------------------
 
-class Case(object):
-    __slots__ = ("id", "name", "alg", "set_id", "view", "group", "hint", "_state")
+def invert_minx(alg):
+    """Inverse of a megaminx algorithm (U2 = 144 degrees, so U2 -> U2')."""
+    out = []
+    for tok in reversed(alg.split()):
+        base = tok.rstrip("'2")
+        suffix = tok[len(base):]
+        out.append(base + {"": "'", "'": "", "2": "2'", "2'": "2", "'2": "2"}.get(suffix, "'"))
+    return " ".join(out)
 
-    def __init__(self, cid, name, alg, set_id, view, group=None, hint=None):
+
+class Case(object):
+    __slots__ = ("id", "name", "alg", "set_id", "view", "group", "hint", "puzzle", "_state")
+
+    def __init__(self, cid, name, alg, set_id, view, group=None, hint=None, puzzle="333"):
         self.id = cid
         self.name = name          # (en, ru)
         self.alg = alg
         self.set_id = set_id
-        self.view = view          # "oll", "pll", "f2l", "full"
+        self.view = view          # oll, pll, f2l, full, eo, ll2, pll2, pbl, ll4, pll4,
+        #                           pyra, skewb, sq1, none
         self.group = group        # (en, ru) or None
         self.hint = hint          # (en, ru) or None
+        self.puzzle = puzzle      # event id the case belongs to
         self._state = None
 
     def state(self):
-        """Cube showing this case (cached)."""
+        """Puzzle state showing this case (cached; None if there is no simulator)."""
         if self._state is None:
-            self._state = case_state(self.alg)
+            self._state = _puzzle_case_state(self.puzzle, self.alg)
         return self._state
 
     def setup(self):
-        """Scramble that creates the case from a solved cube."""
-        return setup_moves(self.alg)
+        """Moves that create the case on a solved puzzle."""
+        return _puzzle_setup(self.puzzle, self.alg)
+
+
+def _puzzle_case_state(puzzle, alg):
+    if puzzle in ("333", "333bf", "333oh"):
+        return case_state(alg)
+    if puzzle in ("222", "444", "555"):
+        from .fastn import NState, net_rotation as nrot, centre_rotation
+        n = int(puzzle[0])
+        rot = nrot(n, alg) if n == 2 else centre_rotation(n, alg)
+        return NState(n).apply(rot).apply(invert(alg))
+    if puzzle == "pyram":
+        from .puzzles import Pyraminx
+        return Pyraminx().apply(invert(alg))
+    if puzzle == "skewb":
+        from .puzzles import Skewb
+        return Skewb().apply(invert(alg))
+    if puzzle == "sq1":
+        from .puzzles import sq1_invert
+        return sq1_invert(alg)          # drawn from this move sequence
+    return None
+
+
+def _puzzle_setup(puzzle, alg):
+    if puzzle in ("333", "333bf", "333oh"):
+        return setup_moves(alg)
+    if puzzle in ("222", "444", "555"):
+        from .fastn import net_rotation as nrot, centre_rotation
+        n = int(puzzle[0])
+        rot = nrot(n, alg) if n == 2 else centre_rotation(n, alg)
+        return (rot + " " + invert(alg)).strip()
+    if puzzle == "sq1":
+        from .puzzles import sq1_invert
+        return sq1_invert(alg)
+    if puzzle == "minx":
+        return invert_minx(alg)
+    return invert(alg)
 
 
 class AlgSet(object):
@@ -301,6 +349,98 @@ def _build():
     sets.append(AlgSet("pll", ("PLL", "PLL"), [pll_cases[n] for n, _, _ in PLL],
                        ("All 21 cases: permute the last layer in one step.",
                         "Все 21 случай: расстановка последнего слоя за один шаг.")))
+    sets.extend(_build_other_events())
+    return sets
+
+
+def _named(prefix, set_id, view, puzzle, items, group=None):
+    out = []
+    for name, alg in items:
+        cid = "%s-%s" % (prefix, name.lower().replace(" ", "-").replace("·", "").replace("--", "-"))
+        out.append(Case(cid, (name, name), alg, set_id, view, group, puzzle=puzzle))
+    return out
+
+
+def _described(set_id, view, puzzle, items):
+    return [Case(cid, name, alg, set_id, view, hint=hint, puzzle=puzzle)
+            for cid, name, alg, hint in items]
+
+
+def _build_other_events():
+    from . import methods as M
+    sets = []
+
+    def add(sid, name, cases, desc):
+        sets.append(AlgSet(sid, name, cases, desc))
+
+    # 2x2
+    add("222-beginner", ("Beginner method", "Метод для начинающих"),
+        _described("222-beginner", "cll2", "222", M.BEGINNER_222),
+        ("Layer by layer with 4 algorithms.", "Послойно, всего 4 алгоритма."))
+    add("222-ortega-oll", ("Ortega: OLL", "Ортега: OLL"),
+        _named("ortega-oll", "222-ortega-oll", "ll2", "222", M.ORTEGA_OLL),
+        ("Orient the last layer (bottom face only needs one colour).",
+         "Ориентация верхнего слоя (снизу нужен только один цвет)."))
+    add("222-ortega-pbl", ("Ortega: PBL", "Ортега: PBL"),
+        _named("ortega-pbl", "222-ortega-pbl", "pbl", "222", M.ORTEGA_PBL),
+        ("Permute both layers at once.", "Расстановка обоих слоёв сразу."))
+    add("222-cll", ("CLL", "CLL"),
+        _named("cll", "222-cll", "cll2", "222", M.CLL),
+        ("Solve the whole last layer in one algorithm after the first layer.",
+         "Весь последний слой одним алгоритмом после первого слоя."))
+    # big cubes
+    add("444-parity", ("4x4 parity", "Паритеты 4x4"),
+        _described("444-parity", "ll4", "444", M.PARITY_444),
+        ("Cases that cannot happen on a 3x3.", "Случаи, которых не бывает на 3x3."))
+    add("555-edges", ("5x5 edge pairing", "Сборка рёбер 5x5"),
+        _described("555-edges", "none", "555", M.EDGES_555),
+        ("Pair the last edges without breaking the centres.",
+         "Собрать последние рёбра, не ломая центры."))
+    # pyraminx
+    add("pyra-beginner", ("Beginner method", "Метод для начинающих"),
+        _described("pyra-beginner", "pyra", "pyram", M.PYRA_BEGINNER),
+        ("Tips, centres, then edges with 5 short algorithms.",
+         "Вершины, центры, затем рёбра — 5 коротких алгоритмов."))
+    add("pyra-l4e", ("L4E", "L4E"),
+        _named("l4e", "pyra-l4e", "pyra", "pyram", M.PYRA_L4E),
+        ("Last four edges: 36 cases used by fast solvers.",
+         "Последние четыре ребра: 36 случаев, которыми пользуются быстрые сборщики."))
+    # skewb
+    add("skewb-layer", ("Layer method", "Послойный метод"),
+        _named("skewb-c", "skewb-layer", "skewb", "skewb", M.SKEWB_CORNERS,
+               ("Top corners", "Верхние углы")) +
+        _named("skewb-z", "skewb-layer", "skewb", "skewb", M.SKEWB_CENTRES,
+               ("Last centres", "Последние центры")),
+        ("First layer by intuition, then 2 corner and 16 centre algorithms "
+         "(optimal, computed by the app).",
+         "Первый слой интуитивно, затем 2 алгоритма для углов и 16 для центров "
+         "(оптимальные, вычислены программой)."))
+    # megaminx
+    # 3x3 Roux
+    cmll = []
+    for name, alg in M.CMLL:
+        group = name.rsplit(" ", 2)[0] if name.startswith("Anti Sune") else name.split(" ")[0]
+        cid = "cmll-" + name.lower().replace(" ", "-")
+        cmll.append(Case(cid, ("CMLL · " + name, "CMLL · " + name), alg, "333-cmll", "cmll",
+                         (group, group), puzzle="333"))
+    add("333-cmll", ("Roux: CMLL", "Roux: CMLL"), cmll,
+        ("Corners of the last layer in one look, keeping both Roux blocks.",
+         "Углы последнего слоя за один взгляд, не ломая блоки Roux."))
+    add("minx-ll", ("4-look last layer", "Последний слой в 4 этапа"),
+        _named("minx-eo", "minx-ll", "none", "minx", M.MINX_EO, ("Edge orientation", "Ориентация рёбер")) +
+        _named("minx-co", "minx-ll", "none", "minx", M.MINX_CO, ("Corner orientation", "Ориентация углов")) +
+        _named("minx-ep", "minx-ll", "none", "minx", M.MINX_EP, ("Edge permutation", "Перестановка рёбер")) +
+        _named("minx-cp", "minx-ll", "none", "minx", M.MINX_CP, ("Corner permutation", "Перестановка углов")),
+        ("EO, CO, EP, CP — 39 algorithms.", "EO, CO, EP, CP — 39 алгоритмов."))
+    # square-1
+    add("sq1-beginner", ("Beginner method", "Метод для начинающих"),
+        _described("sq1-beginner", "sq1", "sq1", M.SQ1_BEGINNER),
+        ("Cube shape, corners, edges and parity.", "Форма куба, углы, рёбра и паритет."))
+    # blindfolded
+    add("bld-op", ("Old Pochmann", "Old Pochmann"),
+        _described("bld-op", "full", "333bf", M.BLD_OP),
+        ("Solve one piece at a time with swap algorithms.",
+         "Собираешь по одной детали алгоритмами обмена."))
     return sets
 
 

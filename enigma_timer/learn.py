@@ -30,42 +30,153 @@ AGAIN, HARD, GOOD = 0, 1, 2
 # Learning path
 # ---------------------------------------------------------------------------
 
+BEGINNER, INTERMEDIATE, ADVANCED = "beginner", "intermediate", "advanced"
+TIER_NAMES = {
+    BEGINNER: ("Beginner", "Новичок"),
+    INTERMEDIATE: ("Intermediate", "Продвинутый"),
+    ADVANCED: ("Pro", "Профи"),
+}
+
+
 class Level(object):
-    def __init__(self, lid, name, subtitle, set_id=None, lesson=None):
+    def __init__(self, lid, name, subtitle, set_id=None, lesson=None, tier=BEGINNER):
         self.id = lid
         self.name = name            # (en, ru)
         self.subtitle = subtitle    # (en, ru)
         self.set_id = set_id
         self.lesson = lesson        # lesson id or None
+        self.tier = tier
 
     @property
     def cases(self):
         return SET_BY_ID[self.set_id].cases if self.set_id else []
 
 
-LEVELS = [
-    Level("notation", ("Notation", "Нотация"),
-          ("How to read algorithms", "Как читать алгоритмы"), lesson="notation"),
-    Level("beginner", ("Beginner method", "Метод для начинающих"),
-          ("Solve the cube for the first time", "Собери куб в первый раз"),
-          set_id="beginner", lesson="beginner"),
-    Level("oll2", ("2-look OLL", "OLL в 2 этапа"),
-          ("10 algorithms for a yellow top", "10 алгоритмов для жёлтого верха"),
-          set_id="oll2", lesson="cfop"),
-    Level("pll2", ("2-look PLL", "PLL в 2 этапа"),
-          ("6 algorithms to finish the cube", "6 алгоритмов, чтобы закончить куб"),
-          set_id="pll2"),
-    Level("f2l", ("F2L", "F2L"),
-          ("41 cases, two layers at once", "41 случай: два слоя сразу"),
-          set_id="f2l", lesson="f2l"),
-    Level("oll", ("Full OLL", "Полный OLL"),
-          ("57 cases, last layer orientation in one look",
-           "57 случаев: ориентация за один взгляд"), set_id="oll"),
-    Level("pll", ("Full PLL", "Полный PLL"),
-          ("21 cases, last layer in one look", "21 случай: последний слой за один взгляд"),
-          set_id="pll"),
+def _lv(*args, **kw):
+    lv = Level(*args, **kw)
+    LEVEL_BY_ID[lv.id] = lv
+    return lv
+
+
+LEVEL_BY_ID = {}
+
+L333 = [
+    _lv("notation", ("Notation", "Нотация"),
+        ("How to read algorithms", "Как читать алгоритмы"), lesson="notation"),
+    _lv("beginner", ("Beginner method", "Метод для начинающих"),
+        ("Solve the cube for the first time", "Собери куб в первый раз"),
+        set_id="beginner", lesson="beginner"),
+    _lv("oll2", ("2-look OLL", "OLL в 2 этапа"),
+        ("10 algorithms for a yellow top", "10 алгоритмов для жёлтого верха"),
+        set_id="oll2", lesson="cfop", tier=INTERMEDIATE),
+    _lv("pll2", ("2-look PLL", "PLL в 2 этапа"),
+        ("6 algorithms to finish the cube", "6 алгоритмов, чтобы закончить куб"),
+        set_id="pll2", tier=INTERMEDIATE),
+    _lv("f2l", ("F2L", "F2L"),
+        ("41 cases, two layers at once", "41 случай: два слоя сразу"),
+        set_id="f2l", lesson="f2l", tier=INTERMEDIATE),
+    _lv("oll", ("Full OLL", "Полный OLL"),
+        ("57 cases, last layer orientation in one look",
+         "57 случаев: ориентация за один взгляд"), set_id="oll", tier=ADVANCED),
+    _lv("pll", ("Full PLL", "Полный PLL"),
+        ("21 cases, last layer in one look", "21 случай: последний слой за один взгляд"),
+        set_id="pll", tier=ADVANCED),
+    _lv("roux-cmll", ("Roux: CMLL", "Roux: CMLL"),
+        ("Another top method: blocks, CMLL, LSE", "Другой топ-метод: блоки, CMLL, LSE"),
+        set_id="333-cmll", lesson="roux", tier=ADVANCED),
 ]
-LEVEL_BY_ID = dict((lv.id, lv) for lv in LEVELS)
+L222 = [
+    _lv("222-notation", ("Notation", "Нотация"), ("Same as the 3x3", "Как на 3x3"),
+        lesson="ref:222"),
+    _lv("222-beginner", ("Beginner method", "Метод для начинающих"),
+        ("Layer by layer, 4 algorithms", "Послойно, 4 алгоритма"),
+        set_id="222-beginner", lesson="222-beginner"),
+    _lv("222-ortega-oll", ("Ortega: OLL", "Ортега: OLL"), ("7 algorithms", "7 алгоритмов"),
+        set_id="222-ortega-oll", lesson="222-ortega", tier=INTERMEDIATE),
+    _lv("222-ortega-pbl", ("Ortega: PBL", "Ортега: PBL"), ("6 algorithms", "6 алгоритмов"),
+        set_id="222-ortega-pbl", tier=INTERMEDIATE),
+    _lv("222-cll", ("CLL", "CLL"), ("40 cases, last layer in one look",
+                                     "40 случаев: последний слой за один взгляд"),
+        set_id="222-cll", tier=ADVANCED),
+]
+LBIG = [
+    _lv("big-notation", ("Notation", "Нотация"), ("Wide moves and slices", "Широкие ходы и слайсы"),
+        lesson="ref:444"),
+    _lv("444-reduction", ("Reduction method", "Метод редукции"),
+        ("Centres, edges, then 3x3", "Центры, рёбра, затем 3x3"), lesson="444-reduction"),
+    _lv("444-parity", ("4x4 parity", "Паритеты 4x4"), ("3 algorithms", "3 алгоритма"),
+        set_id="444-parity", tier=INTERMEDIATE),
+    _lv("555-edges", ("5x5 and bigger", "5x5 и больше"),
+        ("Edge pairing", "Сборка рёбер"), set_id="555-edges", lesson="555-edges",
+        tier=INTERMEDIATE),
+]
+LPYRA = [
+    _lv("pyra-notation", ("Notation", "Нотация"), ("Corners and tips", "Вершины и кончики"),
+        lesson="ref:pyram"),
+    _lv("pyra-beginner", ("Beginner method", "Метод для начинающих"),
+        ("Tips, centres, edges", "Вершинки, центры, рёбра"),
+        set_id="pyra-beginner", lesson="pyra-beginner"),
+    _lv("pyra-l4e", ("L4E", "L4E"), ("36 cases", "36 случаев"), set_id="pyra-l4e",
+        lesson="pyra-l4e", tier=ADVANCED),
+]
+LSKEWB = [
+    _lv("skewb-notation", ("Notation", "Нотация"), ("WCA corner moves", "Ходы углами по WCA"),
+        lesson="ref:skewb"),
+    _lv("skewb-layer", ("Layer method", "Послойный метод"),
+        ("2 corner + 16 centre cases", "2 случая углов + 16 центров"),
+        set_id="skewb-layer", lesson="skewb-layer", tier=INTERMEDIATE),
+]
+LMINX = [
+    _lv("minx-notation", ("Notation", "Нотация"), ("Faces and Pochmann scrambles",
+                                                   "Грани и скрамблы Похмана"), lesson="ref:minx"),
+    _lv("minx-beginner", ("Beginner method", "Метод для начинающих"),
+        ("Like a 3x3, layer by layer", "Как 3x3, послойно"), lesson="minx-beginner"),
+    _lv("minx-ll", ("4-look last layer", "Последний слой в 4 этапа"), ("39 algorithms", "39 алгоритмов"),
+        set_id="minx-ll", tier=INTERMEDIATE),
+]
+LSQ1 = [
+    _lv("sq1-notation", ("Notation", "Нотация"), ("(x, y) and the slice", "(x, y) и слайс"),
+        lesson="ref:sq1"),
+    _lv("sq1-beginner", ("Beginner method", "Метод для начинающих"),
+        ("7 algorithms", "7 алгоритмов"), set_id="sq1-beginner", lesson="sq1-beginner"),
+]
+LCLOCK = [
+    _lv("clock-notation", ("Notation", "Нотация"), ("Pins and dials", "Штырьки и колёса"),
+        lesson="ref:clock"),
+    _lv("clock-beginner", ("Beginner method", "Метод для начинающих"),
+        ("Cross, back, corners", "Крест, обратная сторона, углы"), lesson="clock-beginner"),
+]
+LBLD = [L333[0], _lv("bld-op", ("Old Pochmann", "Old Pochmann"),
+                     ("Blindfolded, one piece at a time", "Вслепую, по одной детали"),
+                     set_id="bld-op", lesson="bld-op", tier=INTERMEDIATE)]
+LOH = [_lv("oh", ("One-handed tips", "Советы для одной руки"), ("Grips and algorithms",
+                                                                 "Хваты и алгоритмы"),
+           lesson="oh"), L333[2], L333[3], L333[4]]
+LFMC = [L333[0], _lv("fmc", ("FMC basics", "Основы FMC"), ("Blocks, skeletons, NISS",
+                                                            "Блоки, скелеты, NISS"), lesson="fmc")]
+
+PATHS = {
+    "333": L333, "222": L222, "444": LBIG, "555": LBIG, "666": LBIG, "777": LBIG,
+    "pyram": LPYRA, "skewb": LSKEWB, "minx": LMINX, "sq1": LSQ1, "clock": LCLOCK,
+    "333bf": LBLD, "333oh": LOH, "333fm": LFMC,
+}
+# order of the puzzles in the Training selector
+PATH_ORDER = ["333", "222", "444", "pyram", "skewb", "minx", "sq1", "clock",
+              "333bf", "333oh", "333fm"]
+PATH_NAMES = {
+    "333": ("3x3 · Fridrich (CFOP)", "3x3 · Фридрих (CFOP)"),
+    "222": ("2x2 · Ortega, CLL", "2x2 · Ортега, CLL"),
+    "444": ("4x4–7x7 · Reduction", "4x4–7x7 · Редукция"),
+    "pyram": ("Pyraminx", "Пирамидка"),
+    "skewb": ("Skewb", "Скьюб"),
+    "minx": ("Megaminx", "Мегаминкс"),
+    "sq1": ("Square-1", "Square-1"),
+    "clock": ("Clock", "Clock"),
+    "333bf": ("3x3 blindfolded", "3x3 вслепую"),
+    "333oh": ("3x3 one-handed", "3x3 одной рукой"),
+    "333fm": ("3x3 fewest moves", "3x3 FMC"),
+}
+LEVELS = L333   # kept for older code
 
 
 # ---------------------------------------------------------------------------
@@ -146,8 +257,8 @@ class Progress(object):
         a, b = self.level_counts(level)
         return a >= b
 
-    def next_level(self):
-        for lv in LEVELS:
+    def next_level(self, path="333"):
+        for lv in PATHS.get(path, L333):
             if not self.level_done(lv):
                 return lv
         return None

@@ -177,7 +177,11 @@ LESSONS = {"notation": NOTATION, "beginner": BEGINNER, "cfop": CFOP, "f2l": F2L}
 
 
 def lesson_html(lesson_id, lang):
-    data = LESSONS.get(lesson_id)
+    if lesson_id.startswith("ref:"):
+        from .reference import html
+        return html(lesson_id[4:], lang)
+    from .lessons2 import L
+    data = L.get(lesson_id) or LESSONS.get(lesson_id)
     if not data:
         return ""
     return data.get(lang) or data["en"]

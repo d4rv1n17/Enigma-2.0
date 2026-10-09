@@ -6,10 +6,12 @@ _LANG = ["en"]
 STRINGS = {
     "app_title": ("Enigma Cube", "Enigma Cube"),
     "about": ("About Enigma Cube", "О программе"),
-    "about_text": ("Speedcubing timer with WCA scrambles for 14 events, statistics and "
-                   "a training section with 140+ CFOP algorithms. Works fully offline.",
-                   "Таймер для спидкубинга: скрамблы WCA для 14 дисциплин, статистика и "
-                   "тренировка с более чем 140 алгоритмами CFOP. Работает полностью офлайн."),
+    "about_text": ("Speedcubing timer and trainer: WCA scrambles for 14 events, statistics, "
+                   "courses for every event, a notation reference and achievements. "
+                   "Works fully offline.",
+                   "Таймер и тренажёр для спидкубинга: скрамблы WCA для 14 дисциплин, статистика, "
+                   "курсы по всем дисциплинам, справочник нотации и достижения. "
+                   "Работает полностью офлайн."),
     "minimal_mode": ("Minimal mode", "Минимальный режим"),
     "tab_progress": ("Progress", "Прогресс"),
     "tab_distribution": ("Distribution", "Распределение"),
@@ -101,6 +103,13 @@ STRINGS = {
     # training
     "nav_timer": ("Timer", "Таймер"),
     "nav_training": ("Training", "Тренировка"),
+    "nav_reference": ("Reference", "Справочник"),
+    "nav_achievements": ("Achievements", "Достижения"),
+    "reference": ("Notation", "Нотация"),
+    "achievements": ("Achievements", "Достижения"),
+    "ach_summary": ("%d of %d unlocked", "Получено %d из %d"),
+    "ach_new": ("Achievement unlocked: %s", "Новое достижение: %s"),
+    "ach_many": ("%d achievements unlocked", "Получено достижений: %d"),
     "new_window": ("Open Training in a new window", "Открыть тренировку в новом окне"),
     "pin_window": ("Keep on top of other windows", "Поверх других окон"),
     "path": ("Learning path", "Путь обучения"),

@@ -7,20 +7,33 @@ Enigma Cube generates WCA-style scrambles and shows a preview of each one. It ti
 ## Features
 
 ### Training (new in 3.0)
-- **Learning path in 7 steps:**
-  1. Notation
-  2. Beginner method
-  3. 2-look OLL
-  4. 2-look PLL
-  5. F2L
-  6. Full OLL
-  7. Full PLL
-- **Algorithm database:** 7 beginner algorithms, F2L 41, OLL 57, PLL 21, plus the 2-look subsets. Algorithms come from speedcubedb.com, cubingcheatsheet.com and ruwix.com, and each one is checked by the tests with a cube simulator.
-- **Case pictures:** OLL patterns, PLL with arrows and F2L in 3D, all generated from the algorithms themselves.
+- **Courses for all 14 events, from beginner to advanced.** Levels are marked *beginner*, *intermediate* and *advanced*:
+
+  | Event | Methods |
+  |---|---|
+  | 3x3 | Beginner method, Fridrich/CFOP (2-look OLL/PLL, F2L 41, OLL 57, PLL 21), Roux CMLL 42 |
+  | 2x2 | Beginner method, Ortega (OLL 7, PBL 6), CLL 40 |
+  | 4x4–7x7 | Reduction, 4x4 parity algorithms, 5x5+ edge pairing |
+  | Pyraminx | Beginner method, L4E 36 |
+  | Skewb | Layer method (2 corner + 16 centre cases) |
+  | Megaminx | Beginner method, 4-look last layer |
+  | Square-1 | Beginner method |
+  | Clock | Beginner method |
+  | 3BLD / OH / FMC | Old Pochmann, one-handed tips, FMC basics |
+
+- **342 algorithm cases.** Algorithms come from speedcubedb.com, cubingcheatsheet.com, ruwix.com and ranzha.cubing.net. Every set that has a simulator in the app (all except Megaminx and Clock) is checked by the tests:
+  - each algorithm keeps the solved part of the puzzle intact;
+  - all cases in a set are different.
+- **Case pictures** are generated from the algorithms themselves:
+  - 3x3: OLL, PLL with arrows, F2L in 3D, CMLL corners;
+  - 2x2 views and 4x4 views;
+  - Pyraminx, Skewb and Square-1 diagrams.
 - **Spaced-repetition trainer:**
   - Recognise the case, solve it on your cube, reveal the algorithm and rate yourself (1–3).
   - Cases move through Leitner boxes: review now, then after 1 day, 3, 7, 16 and 35 days.
   - New cases are introduced 4 at a time.
+- **Notation reference** for every puzzle, with pictures of each move drawn by the built-in simulators.
+- **40 achievements** for solving (counts, sub-X singles and averages), learning (lessons and algorithm sets) and regular practice (day streaks).
 - **Multi-window mode:** open Training in its own window (**⧉**) next to the timer. Pin it on top of other windows if you like.
 
 ### Timer and statistics
@@ -140,7 +153,8 @@ tests/                   unit tests (scrambles, stats, every algorithm, setup lo
 ## Changelog
 
 ### 3.0: Training
-- A new **Training** section with a learning path, lessons, 140+ verified CFOP algorithms and a spaced-repetition trainer.
+- A new **Training** section with courses for all 14 events, from beginner to advanced. It includes lessons, 342 algorithm cases verified by simulators and a spaced-repetition trainer.
+- A notation **Reference** for every puzzle and **Achievements**.
 - **Multi-window mode:** Training can be opened in separate windows next to the timer.
 - A new custom installer replaces Inno Setup. It installs, updates and uninstalls the app, and switches between RU and EN.
 - The 3x3 simulator now supports `x y z`, `M E S` and wide moves (`r`, `Rw`).

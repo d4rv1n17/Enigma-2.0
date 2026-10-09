@@ -21,6 +21,10 @@ from .stats import (DNF, INF, OK, PLUS2, STAT_ROWS, SessionStats, Solve, fmt_avg
                     fmt_ms, fmt_solve, parse_time, trimmed_indices)
 from .stats import average as stats_average
 from .stats import mean as stats_mean
+from . import achievements as ach
+from . import learn
+from .i18n import pick
+from .pages import AchievementsPage, ReferencePage
 from .training import TrainingHub, TrainingWidget, TrainingWindow
 from .widgets import ScramblePreview, TimeChart, TimeHistogram, TimerDisplay, Toast
 
@@ -123,6 +127,9 @@ class MainWindow(QMainWindow):
         self.training = None
         self.extra_windows = []
         self.hub = TrainingHub(store, self)
+        self.page_widgets = {0: None}
+        self.achievements_page = None
+        self.hub.changed.connect(self._training_changed)
 
         self.setWindowTitle(tr("app_title"))
         icon_path = os.path.join(ASSETS, "app_icon.png")
@@ -150,6 +157,7 @@ class MainWindow(QMainWindow):
             self.resize(1280, 800)
 
         self.switch_session(self.store.current_id)
+        self.check_achievements(quiet=True)   # unlock earned ones without a toast storm
 
     # ==================================================================
     # UI construction
@@ -179,7 +187,7 @@ class MainWindow(QMainWindow):
         top.addSpacing(16)
         self.nav_group = QButtonGroup(self)
         self.nav_group.setExclusive(True)
-        for i, key in enumerate(("nav_timer", "nav_training")):
+        for i, key in enumerate(("nav_timer", "nav_training", "nav_reference", "nav_achievements")):
             b = QPushButton(tr(key))
             b.setObjectName("nav")
             b.setCheckable(True)
@@ -766,6 +774,10 @@ class MainWindow(QMainWindow):
         self.refresh()
         self.save()
         self._check_pb(old)
+        if not self.toast.isVisible():
+            self.check_achievements()
+        else:
+            ach.check(self.store)   # unlock silently, the PB toast is showing
 
     def _check_pb(self, old):
         if old is None or self.stats is None:
@@ -1027,18 +1039,54 @@ class MainWindow(QMainWindow):
         if self.state != IDLE:
             self.nav_group.button(self.page).setChecked(True)
             return
-        if idx == 1 and self.training is None:
-            self.training = TrainingWidget(self.hub)
-            self.pages.addWidget(self.training)
+        if self.page_widgets.get(idx) is None and idx > 0:
+            if idx == 1:
+                # open the path of the event the user is timing
+                path = self.session.puzzle if self.session.puzzle in learn.PATHS else "333"
+                if not self.store.settings.get("train_path"):
+                    self.hub.path = path
+                w = self.training = TrainingWidget(self.hub)
+            elif idx == 2:
+                w = ReferencePage(self.hub)
+                pid = self.session.puzzle
+                w.show_puzzle({"555": "444", "666": "444", "777": "444", "333oh": "333",
+                               "333bf": "333", "333fm": "333"}.get(pid, pid))
+                ach.set_flag(self.store, "reference")
+            else:
+                w = self.achievements_page = AchievementsPage(self.store)
+            self.page_widgets[idx] = w
+            self.pages.addWidget(w)
+        if idx == 3 and self.achievements_page is not None:
+            self.achievements_page.refresh()
         self.page = idx
-        self.pages.setCurrentIndex(idx)
+        self.pages.setCurrentWidget(self.page_widgets[idx] if idx else self.timer_page)
+        if idx in (1, 2):
+            self.check_achievements()
         self.puzzle_bar.setVisible(idx == 0)
         self.minimal_btn.setVisible(idx == 0)
         b = self.nav_group.button(idx)
         if b and not b.isChecked():
             b.setChecked(True)
 
+    def _training_changed(self):
+        ach.mark_day(self.store)
+        self.check_achievements()
+
+    def check_achievements(self, quiet=False):
+        new, _ = ach.check(self.store)
+        if not new:
+            return
+        self.save()
+        if quiet:
+            return
+        if len(new) == 1:
+            self.toast.show_message("★  " + tr("ach_new") % pick(new[0]["name"]), 4500)
+        else:
+            self.toast.show_message("★  " + tr("ach_many") % len(new), 4500)
+
     def open_training_window(self):
+        ach.set_flag(self.store, "training_window")
+        self.check_achievements()
         win = TrainingWindow(self.hub, self.windowIcon())
         self.extra_windows.append(win)
         win.destroyed.connect(lambda *_: self.extra_windows.remove(win)

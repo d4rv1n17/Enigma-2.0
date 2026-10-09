@@ -109,27 +109,46 @@ def _run(folder):
         win.set_page(1)
         tw = win.training
         _grab(app, win, folder, "%s_05_training_notation" % lang)
-        tw.levels.setCurrentRow(1)
+        tw.select_level("beginner")
         _grab(app, win, folder, "%s_06_training_beginner" % lang)
-        tw.levels.setCurrentRow(5)          # full OLL
+        tw.select_level("oll")
         tw.content.setCurrentIndex(1)
+        tw._update_detail_visibility()
         tw.grid.setCurrentRow(26)           # OLL 27 (Sune)
         _grab(app, win, folder, "%s_07_training_oll" % lang)
-        tw.levels.setCurrentRow(6)          # PLL
+        tw.select_level("pll")
         tw.content.setCurrentIndex(1)
+        tw._update_detail_visibility()
         tw.grid.setCurrentRow(15)
         _grab(app, win, folder, "%s_08_training_pll" % lang)
-        tw.levels.setCurrentRow(4)          # F2L
-        tw.content.setCurrentIndex(1)
-        tw.grid.setCurrentRow(0)
-        _grab(app, win, folder, "%s_09_training_f2l" % lang)
-        tw.levels.setCurrentRow(6)
+        shots = [("333", "roux-cmll", 24), ("222", "222-cll", 13), ("222", "222-ortega-pbl", 0), ("444", "444-parity", 0),
+                 ("pyram", "pyra-l4e", 12), ("skewb", "skewb-layer", 3),
+                 ("minx", "minx-ll", 4), ("sq1", "sq1-beginner", 6), ("clock", "clock-beginner", -1),
+                 ("333bf", "bld-op", 3)]
+        for i, (path, level, row) in enumerate(shots):
+            tw.path_combo.setCurrentIndex(tw.path_combo.findData(path))
+            tw.select_level(level)
+            if row >= 0:
+                tw.content.setCurrentIndex(1)
+                tw._update_detail_visibility()
+                tw.grid.setCurrentRow(row)
+            _grab(app, win, folder, "%s_09_%02d_%s" % (lang, i, level))
+        tw.path_combo.setCurrentIndex(tw.path_combo.findData("333"))
+        tw.select_level("pll")
         tw.train_level()
         _grab(app, win, folder, "%s_10_trainer" % lang)
         tw.trainer.reveal()
         _grab(app, win, folder, "%s_11_trainer_revealed" % lang)
         tw.trainer.rate(2)
         tw.trainer.stop()
+
+        win.set_page(2)
+        ref = win.page_widgets[2]
+        for pid in ("333", "222", "444", "pyram", "skewb", "minx", "sq1", "clock"):
+            ref.show_puzzle(pid)
+            _grab(app, win, folder, "%s_13_reference_%s" % (lang, pid))
+        win.set_page(3)
+        _grab(app, win, folder, "%s_14_achievements" % lang)
 
         win.open_training_window()
         extra = win.extra_windows[-1]

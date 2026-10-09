@@ -129,17 +129,21 @@ class Cube(object):
                 # middle layer(s) only: everything except the two outer layers
                 self.turn(_SLICE[face], n - 1, times, skip=1)
             else:
-                if face.islower():
+                skip = 0
+                if face.islower():          # r = Rw (two layers), 3r = 3Rw
                     face = face.upper()
                     width = int(prefix) if prefix else 2
-                elif prefix:
+                elif prefix and wide:       # 3Rw = three outer layers
                     width = int(prefix)
+                elif prefix:                # 2R = only the 2nd layer (a slice)
+                    width = int(prefix)
+                    skip = width - 1
                 elif wide:
                     width = 2
                 else:
                     width = 1
                 width = max(1, min(width, n))
-                self.turn(face, width, times)
+                self.turn(face, width, times, skip=min(skip, width - 1))
         return self
 
     # ------------------------------------------------------------------

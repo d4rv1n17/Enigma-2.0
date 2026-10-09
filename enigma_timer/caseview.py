@@ -55,6 +55,8 @@ def _ll(state, view, alg=None):
     def colour_of(face, r, c):
         col = state.color(_loc(face, r, c))
         corner = (face == "U" and r != 1 and c != 1) or (face != "U" and c != 1)
+        if view == "cmll" and not corner and not (face == "U" and r == 1 and c == 1):
+            return GREY  # Roux CMLL: only the corners matter
         if view in ("oll", "eo"):
             if view == "eo" and corner and not (face == "U" and r == 1 and c == 1):
                 return GREY
@@ -207,13 +209,138 @@ def _iso(state, view):
     return out
 
 
+def iso_grid(g, n, grey_top=False):
+    """3D view (U, F, R) of any n x n cube from its facelets."""
+    def P(x, y, z):
+        return ((x - z) * _C30, (x + z) * _S30 - y)
+
+    h = n / 2.0
+    quads = []
+
+    def add(face, r, c, corners):
+        colour = DISPLAY[g[face][r][c]]
+        cx = sum(p[0] for p in corners) / 4.0
+        cy = sum(p[1] for p in corners) / 4.0
+        pts = [(cx + (p[0] - cx) * 0.86, cy + (p[1] - cy) * 0.86) for p in corners]
+        quads.append(("poly", pts, colour))
+
+    for r in range(n):
+        for c in range(n):
+            x0, z0 = -h + c, -h + r
+            add("U", r, c, [P(x0, h, z0), P(x0 + 1, h, z0), P(x0 + 1, h, z0 + 1), P(x0, h, z0 + 1)])
+            y0, x0 = h - r, -h + c
+            add("F", r, c, [P(x0, y0, h), P(x0 + 1, y0, h), P(x0 + 1, y0 - 1, h), P(x0, y0 - 1, h)])
+            y0, z0 = h - r, h - c
+            add("R", r, c, [P(h, y0, z0), P(h, y0, z0 - 1), P(h, y0 - 1, z0 - 1), P(h, y0 - 1, z0)])
+    outline = [P(-h, h, -h), P(h, h, -h), P(h, h, h), P(h, -h, h), P(-h, -h, h), P(-h, h, h)]
+    return _fit([("poly", outline, PLASTIC)] + quads, 0.02)
+
+
 def shapes(state, view, alg=None):
-    if view in ("oll", "eo", "pll"):
+    if view in ("oll", "eo", "pll", "cmll"):
         return _ll(state, view, alg)
     return _iso(state, view)
 
 
 _PRE = {}
+
+
+def _fit(shapes, margin=0.03):
+    """Scale primitives so they fill the unit square (keeping proportions)."""
+    pts = [q for sh in shapes for q in (sh[1] if sh[0] == "poly" else (sh[1], sh[2]))]
+    if not pts:
+        return shapes
+    x0 = min(p[0] for p in pts)
+    x1 = max(p[0] for p in pts)
+    y0 = min(p[1] for p in pts)
+    y1 = max(p[1] for p in pts)
+    span = max(x1 - x0, y1 - y0) or 1.0
+    k = (1 - 2 * margin) / span
+    ox = margin + ((1 - 2 * margin) - (x1 - x0) * k) / 2.0
+    oy = margin + ((1 - 2 * margin) - (y1 - y0) * k) / 2.0
+
+    def T(p):
+        return (ox + (p[0] - x0) * k, oy + (p[1] - y0) * k)
+
+    out = []
+    for sh in shapes:
+        if sh[0] == "poly":
+            out.append(("poly", [T(p) for p in sh[1]], sh[2]))
+        else:
+            out.append((sh[0], T(sh[1]), T(sh[2])))
+    return out
+
+
+def ll_grid(g, n, mask):
+    """Top view of the U face of an n x n cube with side strips.
+
+    g: facelets dict {face: rows of colour letters}; mask: True for the
+    "yellow or grey" orientation view, False for full colours."""
+    out = []
+    m = 0.13
+    cell = (1 - 2 * m) / float(n)
+    gap = cell * 0.07
+    strip = m * 0.62
+    out.append(("poly", [(m - gap, m - gap), (1 - m + gap, m - gap),
+                         (1 - m + gap, 1 - m + gap), (m - gap, 1 - m + gap)], PLASTIC))
+
+    def col(c):
+        if mask:
+            return DISPLAY["U"] if c == "U" else GREY
+        return DISPLAY[c]
+
+    for r in range(n):
+        for c in range(n):
+            x0 = m + c * cell + gap
+            y0 = m + r * cell + gap
+            x1, y1 = x0 + cell - 2 * gap, y0 + cell - 2 * gap
+            out.append(("poly", [(x0, y0), (x1, y0), (x1, y1), (x0, y1)], col(g["U"][r][c])))
+    for i in range(n):
+        a = m + i * cell + gap
+        b = a + cell - 2 * gap
+        out.append(("poly", [(a, 1 - m + gap * 2), (b, 1 - m + gap * 2), (b, 1 - m + strip),
+                             (a, 1 - m + strip)], col(g["F"][0][i])))
+        out.append(("poly", [(a, m - strip), (b, m - strip), (b, m - gap * 2), (a, m - gap * 2)],
+                    col(g["B"][0][n - 1 - i])))
+        out.append(("poly", [(m - strip, a), (m - gap * 2, a), (m - gap * 2, b), (m - strip, b)],
+                    col(g["L"][0][i])))
+        out.append(("poly", [(1 - m + gap * 2, a), (1 - m + strip, a), (1 - m + strip, b),
+                             (1 - m + gap * 2, b)], col(g["R"][0][n - 1 - i])))
+    return out
+
+
+def _pentagon():
+    import math
+    pts = [(0.5 + 0.42 * math.cos(math.radians(-90 + 72 * i)),
+            0.53 + 0.42 * math.sin(math.radians(-90 + 72 * i))) for i in range(5)]
+    inner = [(0.5 + 0.2 * math.cos(math.radians(90 + 72 * i)),
+              0.53 + 0.2 * math.sin(math.radians(90 + 72 * i))) for i in range(5)]
+    return [("poly", pts, "#2a2828"), ("poly", inner, DISPLAY["U"])]
+
+
+def other_shapes(case):
+    """Pictures for events other than the 3x3."""
+    st = case.state()
+    view = case.view
+    if view in ("ll2", "cll2", "ll4"):
+        n = st.n
+        return ll_grid(st.facelets(), n, mask=(view == "ll2"))
+    if view == "pbl":
+        top = ll_grid(st.facelets(), 2, mask=False)
+        bottom = ll_grid(st.copy().apply("x2").facelets(), 2, mask=False)
+        out = []
+        for shapes, ox in ((top, 0.0), (bottom, 0.52)):
+            for sh in shapes:
+                out.append(("poly", [(ox + x * 0.48, 0.26 + y * 0.48) for x, y in sh[1]], sh[2]))
+        return out
+    if view in ("pyra", "skewb"):
+        return _fit([("poly", pts, colour) for pts, colour in st.polygons()])
+    if view == "sq1":
+        from .puzzles import sq1_polygons, sq1_slice_lines
+        shapes = [("poly", pts, colour) for pts, colour in sq1_polygons(st)]
+        shapes += [("line", a, b) for a, b in sq1_slice_lines()]
+        return _fit(shapes)
+    return _pentagon()
 
 
 def case_shapes(case, auf=None, arrows=True):
@@ -222,6 +349,8 @@ def case_shapes(case, auf=None, arrows=True):
     auf: pre-AUF to apply to the case (None = the clearest one for PLL).
     arrows: draw PLL arrows (hidden in the trainer, they give the answer away).
     """
+    if case.puzzle not in ("333", "333oh", "333bf") or case.view == "none":
+        return other_shapes(case)
     view = case.view
     if case.id.startswith("oll2-"):
         view = "eo"

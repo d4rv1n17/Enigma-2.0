@@ -8,11 +8,12 @@ changed in one window appears in all of them immediately.
 
 import math
 import sys
+from urllib.parse import unquote
 
 from PyQt5.QtCore import QObject, QPointF, QRectF, QSize, Qt, pyqtSignal
 from PyQt5.QtGui import (QColor, QFont, QImage, QPainter, QPen, QPixmap,
                          QPolygonF, QTextDocument)
-from PyQt5.QtWidgets import (QAbstractItemView, QButtonGroup, QFrame, QSizePolicy,
+from PyQt5.QtWidgets import (QAbstractItemView, QButtonGroup, QComboBox, QFrame, QSizePolicy,
                              QHBoxLayout, QLabel, QListView, QListWidget, QListWidgetItem,
                              QMainWindow, QPushButton, QStackedWidget,
                              QStyle, QStyledItemDelegate, QTextBrowser, QVBoxLayout, QWidget)
@@ -44,6 +45,10 @@ def paint_shapes(p, rect, shapes):
             p.setBrush(col)
             p.drawPolygon(QPolygonF([T(q) for q in sh[1]]))
     lw = max(1.5, w * 0.022)
+    for sh in shapes:
+        if sh[0] == "line":
+            p.setPen(QPen(QColor(theme.ACCENT), max(1.2, w * 0.012), Qt.DashLine))
+            p.drawLine(T(sh[1]), T(sh[2]))
     for sh in shapes:
         if sh[0] not in ("arrow", "arrow2"):
             continue
@@ -93,6 +98,32 @@ def case_pixmap(case, size, auf=None, arrows=True):
     return pm
 
 
+def move_image(puzzle, moves, size):
+    """Picture of a puzzle after `moves` (for lessons and the reference)."""
+    from .puzzles import Pyraminx, Skewb, sq1_polygons, sq1_slice_lines
+    from .fastn import NState
+    if puzzle in ("333", "333oh", "333bf", "333fm"):
+        shapes = caseview.shapes(State().apply(moves), "full")
+    elif puzzle in ("222", "444", "555", "666", "777"):
+        n = int(puzzle[0])
+        shapes = caseview.iso_grid(NState(n).apply(moves).facelets(), n)
+    elif puzzle == "pyram":
+        shapes = caseview._fit([("poly", a, b) for a, b in Pyraminx().apply(moves).polygons()])
+    elif puzzle == "skewb":
+        shapes = caseview._fit([("poly", a, b) for a, b in Skewb().apply(moves).polygons()])
+    elif puzzle == "sq1":
+        shapes = caseview._fit([("poly", a, b) for a, b in sq1_polygons(moves)] +
+                               [("line", a, b) for a, b in sq1_slice_lines()])
+    else:
+        shapes = caseview._pentagon()
+    img = QImage(size, size, QImage.Format_ARGB32_Premultiplied)
+    img.fill(Qt.transparent)
+    p = QPainter(img)
+    paint_shapes(p, QRectF(0, 0, size, size), shapes)
+    p.end()
+    return img
+
+
 def state_image(state, view, size):
     img = QImage(size, size, QImage.Format_ARGB32_Premultiplied)
     img.fill(Qt.transparent)
@@ -115,8 +146,10 @@ class TrainingHub(QObject):
         QObject.__init__(self, parent)
         self.store = store
         self.progress = learn.Progress(store.training)
+        self.path = store.settings.get("train_path") or "333"
 
     def save(self):
+        self.store.settings["train_path"] = self.path
         try:
             self.store.save()
         except (IOError, OSError):
@@ -137,13 +170,29 @@ class LevelDelegate(QStyledItemDelegate):
         self.hub = hub
 
     def sizeHint(self, option, index):
+        if str(index.data(ROLE_ID)).startswith("tier:"):
+            return QSize(220, 30)
         return QSize(220, 62)
 
     def paint(self, p, option, index):
-        lv = learn.LEVEL_BY_ID.get(index.data(ROLE_ID))
+        lid = str(index.data(ROLE_ID))
+        if lid.startswith("tier:"):
+            p.save()
+            f = QFont(theme.ui_font())
+            f.setPixelSize(11)
+            f.setBold(True)
+            p.setFont(f)
+            p.setPen(QColor(theme.FAINT))
+            r = QRectF(option.rect).adjusted(12, 8, -8, 0)
+            p.drawText(r, Qt.AlignLeft | Qt.AlignVCenter,
+                       pick(learn.TIER_NAMES[lid[5:]]).upper())
+            p.restore()
+            return
+        lv = learn.LEVEL_BY_ID.get(lid)
         if lv is None:
             return
         prog = self.hub.progress
+        path = learn.PATHS.get(self.hub.path, learn.L333)
         r = QRectF(option.rect).adjusted(4, 3, -4, -3)
         p.save()
         p.setRenderHint(QPainter.Antialiasing)
@@ -154,7 +203,7 @@ class LevelDelegate(QStyledItemDelegate):
             p.setBrush(QColor(theme.PANEL2 if selected else "#1d1c1c"))
             p.drawRoundedRect(r, 10, 10)
         done, total = prog.level_counts(lv)
-        nxt = prog.next_level()
+        nxt = prog.next_level(self.hub.path)
         is_next = nxt is not None and nxt.id == lv.id
         # step marker
         mr = QRectF(r.left() + 10, r.top() + 12, 22, 22)
@@ -171,7 +220,7 @@ class LevelDelegate(QStyledItemDelegate):
         f.setBold(True)
         p.setFont(f)
         p.setPen(QColor("#111111") if (done >= total or is_next) else QColor(theme.MUTED))
-        num = learn.LEVELS.index(lv) + 1
+        num = (path.index(lv) + 1) if lv in path else 0
         p.drawText(mr, Qt.AlignCenter, "✓" if done >= total else str(num))
         # texts
         tx = mr.right() + 10
@@ -269,9 +318,11 @@ class LessonBrowser(QTextBrowser):
 
     def loadResource(self, rtype, url):
         if rtype == QTextDocument.ImageResource:
-            s = url.toString()
+            s = unquote(url.toString())
             if s.startswith("move:"):
-                return state_image(State().apply(s[5:]), "full", 176)
+                rest = s[5:]
+                puzzle, moves = (rest.split(":", 1) if ":" in rest else ("333", rest))
+                return move_image(puzzle, moves, 200)
             if s.startswith("case:") and s[5:] in algs.CASES:
                 c = algs.CASES[s[5:]]
                 return case_pixmap(c, 120).toImage()
@@ -521,11 +572,12 @@ class TrainingWidget(QWidget):
         sv.setContentsMargins(10, 14, 10, 10)
         sv.setSpacing(6)
         head = QHBoxLayout()
-        t = QLabel(tr("path").upper())
-        t.setObjectName("sectionTitle")
-        head.addSpacing(8)
-        head.addWidget(t)
-        head.addStretch(1)
+        self.path_combo = QComboBox()
+        self.path_combo.setFocusPolicy(Qt.NoFocus)
+        for pid in learn.PATH_ORDER:
+            self.path_combo.addItem(pick(learn.PATH_NAMES[pid]), pid)
+        self.path_combo.currentIndexChanged.connect(self._path_changed)
+        head.addWidget(self.path_combo, 1)
         if standalone:
             self.pin = _button("⤒", "icon", True)
             self.pin.setToolTip(tr("pin_window"))
@@ -538,10 +590,6 @@ class TrainingWidget(QWidget):
         self.levels.setMouseTracking(True)
         self.levels.setFocusPolicy(Qt.NoFocus)
         self.levels.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        for lv in learn.LEVELS:
-            it = QListWidgetItem()
-            it.setData(ROLE_ID, lv.id)
-            self.levels.addItem(it)
         self.levels.currentRowChanged.connect(self._level_changed)
         sv.addWidget(self.levels, 1)
         root.addWidget(side)
@@ -635,18 +683,48 @@ class TrainingWidget(QWidget):
         root.addWidget(self.detail)
 
         hub.changed.connect(self.refresh)
-        nxt = hub.progress.next_level() or learn.LEVELS[0]
-        row = learn.LEVELS.index(nxt)
-        self.levels.setCurrentRow(row)
-        if self.level is None:
-            self._level_changed(row)
+        idx = self.path_combo.findData(hub.path)
+        self.path_combo.setCurrentIndex(max(0, idx))
+        if self.levels.count() == 0:
+            self._path_changed(max(0, idx))
 
     # ------------------------------------------------------------------
+    def _path_changed(self, idx):
+        pid = self.path_combo.itemData(idx) or "333"
+        self.hub.path = pid
+        self.level = None
+        self.levels.blockSignals(True)
+        self.levels.clear()
+        tier = None
+        for lv in learn.PATHS[pid]:
+            if lv.tier != tier:
+                tier = lv.tier
+                head = QListWidgetItem()
+                head.setData(ROLE_ID, "tier:" + tier)
+                head.setFlags(Qt.NoItemFlags)
+                self.levels.addItem(head)
+            it = QListWidgetItem()
+            it.setData(ROLE_ID, lv.id)
+            self.levels.addItem(it)
+        self.levels.blockSignals(False)
+        nxt = self.hub.progress.next_level(pid) or learn.PATHS[pid][0]
+        self.select_level(nxt.id)
+
+    def select_level(self, level_id):
+        for row in range(self.levels.count()):
+            if self.levels.item(row).data(ROLE_ID) == level_id:
+                self.levels.setCurrentRow(row)
+                if self.level is None or self.level.id != level_id:
+                    self._level_changed(row)
+                return
+
     def _level_changed(self, row):
-        if row < 0:
+        if row < 0 or self.levels.item(row) is None:
             return
-        self.level = learn.LEVELS[row]
-        lv = self.level
+        lv = learn.LEVEL_BY_ID.get(self.levels.item(row).data(ROLE_ID))
+        if lv is None:
+            return
+        self.level = lv
         self.stack.setCurrentIndex(0)
         self.title.setText(pick(lv.name))
         desc = pick(algs.SET_BY_ID[lv.set_id].description) if lv.set_id else pick(lv.subtitle)

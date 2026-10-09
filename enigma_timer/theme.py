@@ -96,6 +96,10 @@ QPushButton#rate { background: %(PANEL2)s; color: %(TEXT)s; padding: 10px 16px; 
 QPushButton#rate:hover { background: #2e2c2c; }
 
 QListWidget#levels, QListWidget#grid { background: transparent; border: none; outline: 0; }
+QListWidget#plainlist { background: transparent; border: none; outline: 0; font-size: 14px; }
+QListWidget#plainlist::item { padding: 4px 10px; border-radius: 8px; color: %(MUTED)s; }
+QListWidget#plainlist::item:hover { background: #1d1c1c; color: %(TEXT)s; }
+QListWidget#plainlist::item:selected { background: %(PANEL2)s; color: %(TEXT)s; }
 QListWidget#levels::item, QListWidget#grid::item { background: transparent; border: none; }
 QTextBrowser { background: transparent; border: none; color: %(SCRAMBLE)s; font-size: 15px;
                selection-background-color: %(ACCENT)s; selection-color: #111; }
