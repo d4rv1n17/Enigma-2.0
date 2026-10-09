@@ -25,7 +25,7 @@ from . import achievements as ach
 from . import learn
 from .i18n import pick
 from .pages import AchievementsPage, ReferencePage
-from .training import TrainingHub, TrainingWidget, TrainingWindow
+from .training import TrainingHub, TrainingWidget
 from .widgets import ScramblePreview, TimeChart, TimeHistogram, TimerDisplay, Toast
 
 # PyInstaller unpacks bundled files to sys._MEIPASS
@@ -220,21 +220,26 @@ class MainWindow(QMainWindow):
         top.addWidget(self.puzzle_bar)
         top.addSpacing(10)
 
-        self.window_btn = QPushButton("⧉")
-        self.window_btn.setObjectName("icon")
-        self.window_btn.setToolTip(tr("new_window"))
-        self.window_btn.setFocusPolicy(Qt.NoFocus)
-        self.window_btn.clicked.connect(self.open_training_window)
-        top.addWidget(self.window_btn)
-
-        self.minimal_btn = QPushButton("◧")
-        self.minimal_btn.setObjectName("icon")
-        self.minimal_btn.setCheckable(True)
-        self.minimal_btn.setChecked(bool(self.settings.get("minimal")))
-        self.minimal_btn.setToolTip(tr("minimal_mode") + " (M)")
-        self.minimal_btn.setFocusPolicy(Qt.NoFocus)
-        self.minimal_btn.clicked.connect(self.toggle_minimal)
-        top.addWidget(self.minimal_btn)
+        # multi-window mode: any section can live in its own window
+        self.windows_btn = QPushButton("⧉  " + tr("windows"))
+        self.windows_btn.setObjectName("windows")
+        self.windows_btn.setFocusPolicy(Qt.NoFocus)
+        self.windows_btn.setCursor(Qt.PointingHandCursor)
+        self.windows_btn.setToolTip(tr("windows_tip"))
+        wm = self.windows_menu = QMenu(self.windows_btn)
+        sec = wm.addAction(tr("win_open_section"))
+        sec.setEnabled(False)
+        wm.addAction("⏱   " + tr("win_mini_timer") + "\tCtrl+T", lambda: self.open_window("timer"))
+        wm.addAction("◆   " + tr("win_training") + "\tCtrl+Shift+1", lambda: self.open_window("training"))
+        wm.addAction("?    " + tr("win_reference") + "\tCtrl+Shift+2", lambda: self.open_window("reference"))
+        wm.addAction("★   " + tr("win_achievements") + "\tCtrl+Shift+3",
+                     lambda: self.open_window("achievements"))
+        wm.addSeparator()
+        self.minimal_action = wm.addAction(tr("minimal_mode") + "\tM", self.toggle_minimal)
+        self.minimal_action.setCheckable(True)
+        self.minimal_action.setChecked(bool(self.settings.get("minimal")))
+        self.windows_btn.setMenu(wm)
+        top.addWidget(self.windows_btn)
 
         gear = QPushButton("⚙")
         gear.setObjectName("icon")
@@ -315,6 +320,11 @@ class MainWindow(QMainWindow):
         self.times_table.setContextMenuPolicy(Qt.CustomContextMenu)
         self.times_table.customContextMenuRequested.connect(self._times_menu)
         lv.addWidget(self.times_table, 1)
+        self.empty_label = QLabel(tr("empty_times"))
+        self.empty_label.setObjectName("empty")
+        self.empty_label.setAlignment(Qt.AlignCenter)
+        self.empty_label.setWordWrap(True)
+        lv.addWidget(self.empty_label, 1)
         body.addWidget(self.left_panel)
 
         # centre: scramble, timer, penalty bar
@@ -389,9 +399,18 @@ class MainWindow(QMainWindow):
         pb.addStretch(1)
         center.addWidget(self.pen_bar)
 
-        self.hint = QLabel()
-        self.hint.setObjectName("muted")
-        self.hint.setAlignment(Qt.AlignCenter)
+        self.hint = QWidget()
+        hl = QHBoxLayout(self.hint)
+        hl.setContentsMargins(0, 0, 0, 6)
+        hl.setSpacing(10)
+        hl.addStretch(1)
+        self.hint_key = QLabel(tr("key_space"))
+        self.hint_key.setObjectName("keycap")
+        hl.addWidget(self.hint_key)
+        self.hint_text = QLabel()
+        self.hint_text.setObjectName("muted")
+        hl.addWidget(self.hint_text)
+        hl.addStretch(1)
         center.addWidget(self.hint)
 
         # right: preview + chart
@@ -472,6 +491,10 @@ class MainWindow(QMainWindow):
         sc("Ctrl+E", self.manual_entry)
         sc("Ctrl+,", self.open_settings)
         sc("M", self.toggle_minimal)
+        sc("Ctrl+T", lambda: self.open_window("timer"))
+        sc("Ctrl+Shift+1", lambda: self.open_window("training"))
+        sc("Ctrl+Shift+2", lambda: self.open_window("reference"))
+        sc("Ctrl+Shift+3", lambda: self.open_window("achievements"))
 
     def _apply_visibility(self):
         st = self.state
@@ -488,6 +511,9 @@ class MainWindow(QMainWindow):
         self.scramble_panel.setVisible(show)
         self.pen_bar.setVisible(show and not busy and self._current_solves_count() > 0)
         self.hint.setVisible(show and not busy and self._current_solves_count() == 0)
+        has = self._current_solves_count() > 0
+        self.times_table.setVisible(has)
+        self.empty_label.setVisible(not has)
         want_preview = bool(self.settings.get("show_preview"))
         want_chart = bool(self.settings.get("show_chart"))
         self.right_panel.setVisible(show and not minimal and (want_preview or want_chart))
@@ -597,6 +623,7 @@ class MainWindow(QMainWindow):
         self.scramble_label.setStyleSheet(
             "font-size: %dpx; font-weight: 500; color: %s;" % (size, theme.SCRAMBLE))
         self.preview.set_scramble(puzzle, self.scramble)
+        self._sync_windows()
 
     def copy_scramble(self):
         QApplication.clipboard().setText(self.scramble)
@@ -746,7 +773,7 @@ class MainWindow(QMainWindow):
             self.timer_display.set_display(fmt_ms(0, d), theme.READY)
             return
         self.timer_display.set_display(self._last_text(d), theme.TEXT, self._last_sub())
-        self.hint.setText(tr("inspect_hint") if self.settings.get("inspection") else tr("ready_hint"))
+        self.hint_text.setText(tr("hint_inspect") if self.settings.get("inspection") else tr("hint_ready"))
 
     def _last_text(self, d):
         s = self.session
@@ -913,6 +940,7 @@ class MainWindow(QMainWindow):
             b.setChecked(bool(last) and last.penalty == val)
         self._apply_visibility()
         self._render()
+        self._sync_windows()
 
     def _row_index(self, row):
         it = self.times_table.item(row, 0)
@@ -1048,9 +1076,7 @@ class MainWindow(QMainWindow):
                 w = self.training = TrainingWidget(self.hub)
             elif idx == 2:
                 w = ReferencePage(self.hub)
-                pid = self.session.puzzle
-                w.show_puzzle({"555": "444", "666": "444", "777": "444", "333oh": "333",
-                               "333bf": "333", "333fm": "333"}.get(pid, pid))
+                w.show_puzzle(self.reference_puzzle())
                 ach.set_flag(self.store, "reference")
             else:
                 w = self.achievements_page = AchievementsPage(self.store)
@@ -1063,7 +1089,7 @@ class MainWindow(QMainWindow):
         if idx in (1, 2):
             self.check_achievements()
         self.puzzle_bar.setVisible(idx == 0)
-        self.minimal_btn.setVisible(idx == 0)
+        self.minimal_action.setEnabled(idx == 0)
         b = self.nav_group.button(idx)
         if b and not b.isChecked():
             b.setChecked(True)
@@ -1077,6 +1103,7 @@ class MainWindow(QMainWindow):
         if not new:
             return
         self.save()
+        self._sync_windows()
         if quiet:
             return
         if len(new) == 1:
@@ -1084,22 +1111,47 @@ class MainWindow(QMainWindow):
         else:
             self.toast.show_message("★  " + tr("ach_many") % len(new), 4500)
 
-    def open_training_window(self):
+    def reference_puzzle(self):
+        pid = self.session.puzzle
+        return {"555": "444", "666": "444", "777": "444", "333oh": "333",
+                "333bf": "333", "333fm": "333"}.get(pid, pid)
+
+    def open_window(self, kind):
+        """Open a section (or the mini timer) in its own window."""
+        if self.state != IDLE:
+            return None
+        from .windows import MiniTimerWindow, PageWindow
         ach.set_flag(self.store, "training_window")
-        self.check_achievements()
-        win = TrainingWindow(self.hub, self.windowIcon())
+        if kind == "reference":
+            ach.set_flag(self.store, "reference")
+        win = MiniTimerWindow(self) if kind == "timer" else PageWindow(self, kind)
         self.extra_windows.append(win)
         win.destroyed.connect(lambda *_: self.extra_windows.remove(win)
                               if win in self.extra_windows else None)
+        k = len(self.extra_windows)
         geo = self.geometry()
-        win.move(geo.x() + 60, geo.y() + 40)
+        win.move(geo.x() + 40 + 30 * k, geo.y() + 30 + 30 * k)
         win.show()
+        win.raise_()
+        win.activateWindow()
+        self.check_achievements()
+        return win
+
+    def open_training_window(self):
+        return self.open_window("training")
+
+    def _sync_windows(self):
+        for w in list(self.extra_windows):
+            try:
+                w.sync()
+            except RuntimeError:   # already deleted by Qt
+                pass
 
     def toggle_minimal(self):
         if self.state != IDLE or self.page != 0:
             return
         self.settings["minimal"] = not self.settings.get("minimal")
-        self.minimal_btn.setChecked(bool(self.settings["minimal"]))
+        self.minimal_action.setChecked(bool(self.settings["minimal"]))
         self._apply_visibility()
         self.save()
 

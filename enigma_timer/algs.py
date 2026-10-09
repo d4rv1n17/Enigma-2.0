@@ -231,8 +231,97 @@ def invert_minx(alg):
     return " ".join(out)
 
 
+# Alternative algorithms (second / third choice on speedcubedb.com). Every one
+# is checked in tests/test_algs.py to solve exactly the same case as the main one.
+ALTS = {
+    "oll-1": ["y R U' R2 D' r U' r' D R2 U R'"],
+    "oll-2": ["F R U R' U' S R U R' U' f'"],
+    "oll-3": ["y R' F2 R2 U2 R' F R U2 R2 F2 R"],
+    "oll-4": ["y' f R U R' U' f' U F R U R' U' F'"],
+    "oll-5": ["y2 l' U2 L U L' U l"],
+    "oll-6": ["F U' R2 D R' U' R D' R2 U F'"],
+    "oll-7": ["S' R U R' U R U2 R' U S"],
+    "oll-8": ["l' U' L U' L' U2 l"],
+    "oll-9": ["R U2 R' U' S' R U' R' S"],
+    "oll-10": ["y F U F' R' F R U' R' F' R"],
+    "oll-11": ["y2 r U R' U R' F R F' R U2 r'"],
+    "oll-12": ["F R U R' U' F' U F R U R' U' F'"],
+    "oll-13": ["F U R U' R2 F' R U R U' R'"],
+    "oll-14": ["r U R' U' r' F R2 U R' U' F'"],
+    "oll-15": ["y2 l' U' l L' U' L U l' U l"],
+    "oll-16": ["r U M U R' U' r U' r'"],
+    "oll-17": ["y2 F R' F' R U S' R U' R' S"],
+    "oll-18": ["r U R' U R U2 r2 U' R U' R' U2 r"],
+    "oll-19": ["M U R U R' U' M' R' F R F'"],
+    "oll-20": ["M' U2 M U2 M' U M U2 M' U2 M"],
+    "oll-21": ["y R U2 R' U' R U R' U' R U' R'"],
+    "oll-22": ["R' U2 R2 U R2 U R2 U2 R'"],
+    "oll-23": ["y2 R2 D' R U2 R' D R U2 R"],
+    "oll-24": ["y2 R' F' r U R U' r' F"],
+    "oll-25": ["y F' r U R' U' r' F R"],
+    "oll-26": ["R' U' R U' R' U2 R"],
+    "oll-27": ["y' R' U2 R U R' U R"],
+    "oll-28": ["R' F R S R' F' R S'"],
+    "oll-29": ["y R U R' U' R U' R' F' U' F R U R'"],
+    "oll-30": ["y' r' D' r U' r' D r2 U' r' U r U r'"],
+    "oll-31": ["y2 S' L' U' L U L F' L' f"],
+    "oll-32": ["y2 L U F' U' L' U L F L'"],
+    "oll-33": ["y2 L' U' L U L F' L' F"],
+    "oll-34": ["y2 R U R2 U' R' F R U R U' F'"],
+    "oll-35": ["f R U R' U' f' R U R' U R U2 R'"],
+    "oll-36": ["y2 L' U' L U' L' U L U L F' L' F"],
+    "oll-37": ["F R U' R' U' R U R' F'"],
+    "oll-38": ["y F R U' R' S U' R U R' f'"],
+    "oll-39": ["y' R U R' F' U' F U R U2 R'"],
+    "oll-40": ["y' f R' F' R U R U' R' S'"],
+    "oll-41": ["y2 F U R2 D R' U' R D' R2 F'"],
+    "oll-42": ["y F S' R U R' U' F' U S"],
+    "oll-43": ["y2 F' U' L' U L F"],
+    "oll-44": ["y2 F U R U' R' F'"],
+    "oll-45": ["y R' F' U' F U R"],
+    "oll-46": ["R' F' U' F R U' R' U2 R"],
+    "oll-47": ["F' L' U' L U L' U' L U F"],
+    "oll-48": ["y2 f U R U' R' U R U' R' f'"],
+    "oll-49": ["l U' l2 U l2 U l2 U' l"],
+    "oll-50": ["y2 R' F R2 B' R2 F' R2 B R'"],
+    "oll-51": ["f R U R' U' R U R' U' f'"],
+    "oll-52": ["R U R' U R U' B U' B' R'"],
+    "oll-53": ["y2 l' U' L U' L' U L U' L' U2 l"],
+    "oll-54": ["y' r U2 R' U' R U R' U' R U' r'"],
+    "oll-55": ["y R' F R U R U' R2 F' R2 U' R' U R U R'"],
+    "oll-56": ["r U r' U R U' R' M' U R U2 r'"],
+    "oll-57": ["y R U' R' S' R U R' S"],
+    "pll-Aa": ["y' x L2 D2 L' U' L D2 L' U L'", "l' U R' D2 R U' R' D2 R2 x'"],
+    "pll-Ab": ["y' x L U' L D2 L' U L D2 L2", "y x' R U' R D2 R' U R D2 R2 x"],
+    "pll-E": ["R' U' R' D' R U' R' D R U R' D' R U R' D R2", "R2 U F' R' U R U' R' U R U' R' U R U' F U' R2"],
+    "pll-F": ["y R' F R f' R' F R2 U R' U' R' F' R2 U R' S", "R' U R U' R2 F' U' F U R F R' F' R2"],
+    "pll-Ga": ["R2 u R' U R' U' R u' R2 F' U F", "y R U R' F' R U R' U' R' F R U' R' F R2 U' R' U' R U R' F'"],
+    "pll-Gb": ["R' U' R U D' R2 U R' U R U' R U' R2 D", "y F' U' F R2 u R' U R U' R u' R2"],
+    "pll-Gc": ["y2 R2 F2 R U2 R U2 R' F R U R' U' R' F R2", "D R2 U' R U' R U R' U R2 D' U R U' R'"],
+    "pll-Gd": ["D' R U R' U' D R2 U' R U' R' U R' U R2", "R U R' y' R2 u' R U' R' U R' u R2"],
+    "pll-H": ["M2 U' M2 U2 M2 U' M2", "R2 S2 R2 U' R2 S2 R2"],
+    "pll-Ja": ["y R' U L' U2 R U' R' U2 R L", "L' U' L F L' U' L U L F' L2 U L"],
+    "pll-Jb": ["R U2 R' U' R U2 L' U R' U' L", "r' F R F' r U2 R' U R U2 R'"],
+    "pll-Na": ["F' R U R' U' R' F R2 F U' R' U' R U F' R'", "R F U' R' U R U F' R2 F' R U R U' R' F"],
+    "pll-Nb": ["r' D' F r U' r' F' D r2 U r' U' r' F r F'", "R' U L' U2 R U' L R' U L' U2 R U' L"],
+    "pll-Ra": ["y R U R' F' R U2 R' U2 R' F R U R U2 R'", "L U2 L' U2 L F' L' U' L U L F L2"],
+    "pll-Rb": ["y R2 F R U R U' R' F' R U2 R' U2 R", "R' U2 R' D' R U' R' D R U R U' R' U' R"],
+    "pll-T": ["R U R' U' R' F R2 U' R' U F' L' U L"],
+    "pll-Ua": ["R U R' U R' U' R2 U' R' U R' U R", "y R2 U' S' U2 S U' R2"],
+    "pll-Ub": ["R' U R' U' R' U' R' U R U R2"],
+    "pll-V": ["R' U R U' R' f' U' R U2 R' U' R U' R' f R", "R' U R' U' y R' F' R2 U' R' U R' F R F"],
+    "pll-Y": ["F R' F R2 U' R' U' R U R' F' R U R' U' F'", "R2 U' R2 U' R2 U F U F' R2 F U' F'"],
+    "pll-Z": ["M2 U M2 U M' U2 M2 U2 M'", "y M2 U' M2 U' M' U2 M2 U2 M'"],
+}
+
+
 class Case(object):
     __slots__ = ("id", "name", "alg", "set_id", "view", "group", "hint", "puzzle", "_state")
+
+    @property
+    def alts(self):
+        """Verified alternative algorithms for this case (may be empty)."""
+        return ALTS.get(self.id, [])
 
     def __init__(self, cid, name, alg, set_id, view, group=None, hint=None, puzzle="333"):
         self.id = cid
