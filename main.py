@@ -31,13 +31,36 @@ def safe_exit_setup():
     sip.setdestroyonexit(False)
 
 
+def finish(code):
+    """Leave the process without running DLL teardown on Windows.
+
+    All data is saved before we get here. Qt windows that are still alive
+    when Windows unloads the DLLs can crash in the text-input framework
+    during ExitProcess (a random access violation after a clean exit), so
+    the process is ended directly once everything is flushed.
+    """
+    for f in (sys.stdout, sys.stderr):
+        try:
+            f.flush()
+        except Exception:  # noqa: BLE001 - stdout may be missing in a GUI exe
+            pass
+    if sys.platform.startswith("win"):
+        try:
+            import ctypes
+            k = ctypes.windll.kernel32
+            k.TerminateProcess(k.GetCurrentProcess(), int(code) & 0xFFFFFFFF)
+        except Exception:  # noqa: BLE001 - fall back to a normal exit
+            pass
+    sys.exit(code)
+
+
 def main():
     safe_exit_setup()
     if "--selftest" in sys.argv:
         from enigma_timer import selftest
         i = sys.argv.index("--selftest")
         folder = sys.argv[i + 1] if i + 1 < len(sys.argv) else "selftest"
-        sys.exit(selftest.run(folder))
+        finish(selftest.run(folder))
     if "--uninstall" in sys.argv:
         # Settings -> Apps -> Enigma Cube -> Uninstall runs "EnigmaCube.exe --uninstall"
         from installer import setup_app
@@ -67,7 +90,7 @@ def main():
     # Free cached pixmaps while Qt is still alive; see safe_exit_setup().
     from enigma_timer import training
     training.clear_caches()
-    sys.exit(code)
+    finish(code)
 
 
 if __name__ == "__main__":
