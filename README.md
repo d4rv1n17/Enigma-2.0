@@ -68,7 +68,7 @@ Enigma Cube generates WCA-style scrambles and shows a preview of each one. It ti
 
 ## Install
 
-1. Download `EnigmaCube-Setup-3.1.exe` and run it.
+1. Download `EnigmaCube-Setup-3.1.exe` from the [latest release](https://github.com/d4rv1n17/Enigma-2.0/releases/latest) and run it.
 2. If Windows shows **"Windows protected your PC"**, click **More info → Run anyway**. Windows shows this for new apps that don't have a paid code-signing certificate.
 3. Choose the folder and shortcuts, then click **Install**. If an older version is installed, the button says **Update**.
 
@@ -116,7 +116,7 @@ python main.py
    - creates the setup.
 3. When it finishes, the `Output` folder opens with `EnigmaCube-Setup-3.1.exe` inside.
 
-**Build on GitHub Actions:** every push and pull request builds the installer automatically. Download it from **Actions → Build Windows installer → EnigmaCube-Setup**. If you push a tag such as `v3.0`, the installer is also attached to a GitHub Release.
+**Build on GitHub Actions:** every push and pull request builds the installer automatically. Download it from **Actions → Build Windows installer → EnigmaCube-Setup**. When a new version reaches `main`, the workflow also publishes a GitHub Release with the installer attached.
 
 **Run the tests:**
 
