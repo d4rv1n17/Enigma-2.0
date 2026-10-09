@@ -61,6 +61,7 @@ class Store(object):
     def __init__(self, path=None):
         self.path = path or os.path.join(data_dir(), "data.json")
         self.settings = dict(DEFAULT_SETTINGS)
+        self.training = {}
         self.sessions = []
         self.current_id = None
         self.load()
@@ -83,6 +84,7 @@ class Store(object):
             self.settings.update(data.get("settings", {}))
             self.sessions = [Session.from_dict(s) for s in data.get("sessions", [])]
             self.current_id = data.get("current")
+            self.training = data.get("training", {}) or {}
         if not self.sessions:
             self.sessions = [Session("3x3", "333")]
         if self.current is None:
@@ -90,6 +92,7 @@ class Store(object):
 
     def save(self):
         data = {"version": self.VERSION, "settings": self.settings,
+                "training": self.training,
                 "current": self.current_id,
                 "sessions": [s.to_dict() for s in self.sessions]}
         text = json.dumps(data, ensure_ascii=False, separators=(",", ":"))

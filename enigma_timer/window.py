@@ -21,6 +21,7 @@ from .stats import (DNF, INF, OK, PLUS2, STAT_ROWS, SessionStats, Solve, fmt_avg
                     fmt_ms, fmt_solve, parse_time, trimmed_indices)
 from .stats import average as stats_average
 from .stats import mean as stats_mean
+from .training import TrainingHub, TrainingWidget, TrainingWindow
 from .widgets import ScramblePreview, TimeChart, TimeHistogram, TimerDisplay, Toast
 
 # PyInstaller unpacks bundled files to sys._MEIPASS
@@ -77,6 +78,8 @@ class _KeyFilter(QObject):
                      QEvent.MouseButtonPress):
             return False
         w = self.win
+        if getattr(w, "page", 0) != 0:
+            return False
         if QApplication.activeModalWidget() is not None or \
                 QApplication.activePopupWidget() is not None or \
                 QApplication.activeWindow() is not w:
@@ -116,6 +119,10 @@ class MainWindow(QMainWindow):
         self.scramble = ""
         self.stats = None
         self._loading = False
+        self.page = 0
+        self.training = None
+        self.extra_windows = []
+        self.hub = TrainingHub(store, self)
 
         self.setWindowTitle(tr("app_title"))
         icon_path = os.path.join(ASSETS, "app_icon.png")
@@ -170,7 +177,25 @@ class MainWindow(QMainWindow):
         logo.mousePressEvent = lambda e: self.show_about()
         top.addWidget(logo)
         top.addSpacing(16)
+        self.nav_group = QButtonGroup(self)
+        self.nav_group.setExclusive(True)
+        for i, key in enumerate(("nav_timer", "nav_training")):
+            b = QPushButton(tr(key))
+            b.setObjectName("nav")
+            b.setCheckable(True)
+            b.setChecked(i == 0)
+            b.setFocusPolicy(Qt.NoFocus)
+            self.nav_group.addButton(b, i)
+            top.addWidget(b)
+        self.nav_group.buttonClicked[int].connect(self.set_page)
         top.addStretch(1)
+        self.puzzle_bar = QWidget()
+        top_puzzles = QHBoxLayout(self.puzzle_bar)
+        top_puzzles.setContentsMargins(0, 0, 0, 0)
+        top_puzzles.setSpacing(2)
+        top.addWidget(self.puzzle_bar)
+        top_main = top
+        top = top_puzzles
 
         self.puzzle_group = QButtonGroup(self)
         self.puzzle_group.setExclusive(True)
@@ -193,7 +218,15 @@ class MainWindow(QMainWindow):
             top.addWidget(b)
         self.puzzle_group.buttonClicked[int].connect(
             lambda i: self.select_puzzle(scr.PUZZLES[i][0]))
+        top = top_main
         top.addSpacing(10)
+
+        self.window_btn = QPushButton("⧉")
+        self.window_btn.setObjectName("icon")
+        self.window_btn.setToolTip(tr("new_window"))
+        self.window_btn.setFocusPolicy(Qt.NoFocus)
+        self.window_btn.clicked.connect(self.open_training_window)
+        top.addWidget(self.window_btn)
 
         self.minimal_btn = QPushButton("◧")
         self.minimal_btn.setObjectName("icon")
@@ -213,9 +246,13 @@ class MainWindow(QMainWindow):
         root.addWidget(self.top_bar)
 
         # ---- body ----------------------------------------------------
-        body = QHBoxLayout()
+        self.pages = QStackedWidget()
+        self.timer_page = QWidget()
+        body = QHBoxLayout(self.timer_page)
+        body.setContentsMargins(0, 0, 0, 0)
+        self.pages.addWidget(self.timer_page)
         body.setSpacing(28)
-        root.addLayout(body, 1)
+        root.addWidget(self.pages, 1)
 
         # left: statistics + list of times
         self.left_panel = _panel()
@@ -547,6 +584,8 @@ class MainWindow(QMainWindow):
     # Scrambles
     # ==================================================================
     def new_scramble(self, force=False):
+        if getattr(self, "page", 0) != 0 and force is not True and self.scramble:
+            return
         if self.state != IDLE and force is not True:
             return
         puzzle = self.session.puzzle
@@ -991,8 +1030,32 @@ class MainWindow(QMainWindow):
         storage.export_csv(s, path, int(self.settings.get("decimals", 2)))
         self.toast.show_message(tr("exported") % os.path.basename(path), 2500)
 
-    def toggle_minimal(self):
+    def set_page(self, idx):
         if self.state != IDLE:
+            self.nav_group.button(self.page).setChecked(True)
+            return
+        if idx == 1 and self.training is None:
+            self.training = TrainingWidget(self.hub)
+            self.pages.addWidget(self.training)
+        self.page = idx
+        self.pages.setCurrentIndex(idx)
+        self.puzzle_bar.setVisible(idx == 0)
+        self.minimal_btn.setVisible(idx == 0)
+        b = self.nav_group.button(idx)
+        if b and not b.isChecked():
+            b.setChecked(True)
+
+    def open_training_window(self):
+        win = TrainingWindow(self.hub, self.windowIcon())
+        self.extra_windows.append(win)
+        win.destroyed.connect(lambda *_: self.extra_windows.remove(win)
+                              if win in self.extra_windows else None)
+        geo = self.geometry()
+        win.move(geo.x() + 60, geo.y() + 40)
+        win.show()
+
+    def toggle_minimal(self):
+        if self.state != IDLE or self.page != 0:
             return
         self.settings["minimal"] = not self.settings.get("minimal")
         self.minimal_btn.setChecked(bool(self.settings["minimal"]))
@@ -1035,6 +1098,8 @@ class MainWindow(QMainWindow):
             self.toast.move(int((self.timer_area.width() - self.toast.width()) / 2), 14)
 
     def closeEvent(self, e):
+        for w in list(self.extra_windows):
+            w.close()
         self.settings["geometry"] = self.saveGeometry().toBase64().data().decode("ascii")
         self.save()
         QMainWindow.closeEvent(self, e)

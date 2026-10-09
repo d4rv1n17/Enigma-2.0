@@ -6,10 +6,10 @@ _LANG = ["en"]
 STRINGS = {
     "app_title": ("Enigma Cube", "Enigma Cube"),
     "about": ("About Enigma Cube", "О программе"),
-    "about_text": ("Speedcubing timer with WCA scrambles for 14 events, inspection, "
-                   "sessions and statistics. Works fully offline.",
-                   "Таймер для спидкубинга: скрамблы WCA для 14 дисциплин, инспекция, "
-                   "сессии и статистика. Работает полностью офлайн."),
+    "about_text": ("Speedcubing timer with WCA scrambles for 14 events, statistics and "
+                   "a training section with 140+ CFOP algorithms. Works fully offline.",
+                   "Таймер для спидкубинга: скрамблы WCA для 14 дисциплин, статистика и "
+                   "тренировка с более чем 140 алгоритмами CFOP. Работает полностью офлайн."),
     "minimal_mode": ("Minimal mode", "Минимальный режим"),
     "tab_progress": ("Progress", "Прогресс"),
     "tab_distribution": ("Distribution", "Распределение"),
@@ -98,8 +98,53 @@ STRINGS = {
         "N — новый скрамбл\n"
         "Ctrl+E — ввести время вручную"),
     "chart_single": ("single", "сингл"),
+    # training
+    "nav_timer": ("Timer", "Таймер"),
+    "nav_training": ("Training", "Тренировка"),
+    "new_window": ("Open Training in a new window", "Открыть тренировку в новом окне"),
+    "pin_window": ("Keep on top of other windows", "Поверх других окон"),
+    "path": ("Learning path", "Путь обучения"),
+    "next_up": ("Next step", "Следующий шаг"),
+    "train": ("Practise", "Тренировать"),
+    "train_case": ("Practise this case", "Тренировать этот случай"),
+    "lesson": ("Lesson", "Урок"),
+    "algorithms": ("Algorithms", "Алгоритмы"),
+    "mark_lesson": ("Mark lesson as done", "Урок пройден"),
+    "lesson_done": ("Lesson done ✓", "Урок пройден ✓"),
+    "learned_of": ("%d of %d learned", "Выучено %d из %d"),
+    "due_now": ("%d to review", "%d к повторению"),
+    "f_all": ("All", "Все"),
+    "f_new": ("New", "Новые"),
+    "f_learning": ("Learning", "Учу"),
+    "f_learned": ("Learned", "Выучено"),
+    "st_new": ("New", "Новый"),
+    "st_learning": ("Learning", "Учу"),
+    "st_learned": ("Learned", "Выучил"),
+    "setup_hint": ("Set up: %s", "Как поставить: %s"),
+    "trainer_title": ("Practice · %s", "Тренировка · %s"),
+    "back": ("Back", "Назад"),
+    "reveal": ("Show algorithm", "Показать алгоритм"),
+    "reveal_hint": ("Recognise the case, solve it, then press Space",
+                    "Узнай случай, собери его и нажми Пробел"),
+    "r_again": ("Forgot  1", "Не помню  1"),
+    "r_hard": ("Hard  2", "С трудом  2"),
+    "r_good": ("Knew it  3", "Помню  3"),
+    "session_stats": ("Reviewed %d · %d to review", "Повторено %d · к повторению %d"),
+    "select_case": ("Pick a case to see its algorithm", "Выбери случай, чтобы увидеть алгоритм"),
+    "empty_filter": ("Nothing here yet", "Здесь пока пусто"),
     "average_of": ("Average", "Среднее"),
 }
+
+
+def lang():
+    return _LANG[0]
+
+
+def pick(pair):
+    """Choose the right text from an (en, ru) tuple."""
+    if not pair:
+        return ""
+    return pair[1] if _LANG[0] == "ru" else pair[0]
 
 
 def set_language(lang):

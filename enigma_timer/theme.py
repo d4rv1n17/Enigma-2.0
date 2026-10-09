@@ -79,6 +79,23 @@ QPushButton#tab { padding: 4px 8px; font-size: 11px; font-weight: 600; }
 QPushButton#tab:hover { background: transparent; }
 QPushButton#tab:checked { color: %(TEXT)s; }
 
+QPushButton#nav { font-size: 15px; font-weight: 600; padding: 6px 12px; color: %(MUTED)s; }
+QPushButton#nav:hover { background: transparent; color: %(TEXT)s; }
+QPushButton#nav:checked { color: %(TEXT)s; background: %(PANEL2)s; }
+QPushButton#primary { background: %(ACCENT)s; color: #111; font-weight: 700; padding: 8px 18px;
+                      border-radius: 10px; }
+QPushButton#primary:hover { background: #ffd92e; color: #111; }
+QPushButton#seg { background: %(PANEL2)s; color: %(MUTED)s; padding: 7px 12px; }
+QPushButton#seg:checked { background: %(ACCENT_DARK)s; color: %(ACCENT)s; }
+QPushButton#rate { background: %(PANEL2)s; color: %(TEXT)s; padding: 10px 16px; font-weight: 600;
+                   border-radius: 10px; }
+QPushButton#rate:hover { background: #2e2c2c; }
+
+QListWidget#levels, QListWidget#grid { background: transparent; border: none; outline: 0; }
+QListWidget#levels::item, QListWidget#grid::item { background: transparent; border: none; }
+QTextBrowser { background: transparent; border: none; color: %(SCRAMBLE)s; font-size: 15px;
+               selection-background-color: %(ACCENT)s; selection-color: #111; }
+
 /* real buttons inside dialogs */
 QDialog QPushButton { background: %(PANEL2)s; color: %(TEXT)s; padding: 7px 16px; }
 QDialog QPushButton:hover { background: #2b2929; }
@@ -130,4 +147,5 @@ QSlider::handle:horizontal { background: %(TEXT)s; width: 14px; margin: -5px 0;
                              border-radius: 7px; }
 QSlider::sub-page:horizontal { background: %(ACCENT)s; border-radius: 2px; }
 """ % dict(fam=fam, BG=BG, PANEL=PANEL, PANEL2=PANEL2, BORDER=BORDER, TEXT=TEXT,
-           MUTED=MUTED, FAINT=FAINT, ACCENT=ACCENT, ACCENT_DARK=ACCENT_DARK)
+           MUTED=MUTED, FAINT=FAINT, ACCENT=ACCENT, ACCENT_DARK=ACCENT_DARK,
+           SCRAMBLE=SCRAMBLE)
