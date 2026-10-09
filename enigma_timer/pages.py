@@ -124,7 +124,9 @@ class BadgeDelegate(QStyledItemDelegate):
                        Qt.AlignLeft | Qt.AlignVCenter,
                        time.strftime("%d.%m.%Y", time.localtime(unlocked)))
         elif target > 1:
-            bar = QRectF(tx, r.bottom() - 16, r.right() - tx - 46, 4)
+            label = "%d/%d" % (value, target)
+            lw = p.fontMetrics().boundingRect(label).width() + 10
+            bar = QRectF(tx, r.bottom() - 16, max(20.0, r.right() - tx - 14 - lw), 4)
             p.setPen(Qt.NoPen)
             p.setBrush(QColor("#2a2828"))
             p.drawRoundedRect(bar, 2, 2)
@@ -132,8 +134,8 @@ class BadgeDelegate(QStyledItemDelegate):
             p.drawRoundedRect(QRectF(bar.left(), bar.top(),
                                      bar.width() * min(1.0, value / float(target)), 4), 2, 2)
             p.setPen(QColor(theme.FAINT))
-            p.drawText(QRectF(bar.right() + 6, r.bottom() - 24, 40, 20),
-                       Qt.AlignLeft | Qt.AlignVCenter, "%d/%d" % (value, target))
+            p.drawText(QRectF(bar.right() + 4, r.bottom() - 24, r.right() - bar.right() - 12, 20),
+                       Qt.AlignRight | Qt.AlignVCenter, label)
         p.restore()
 
 

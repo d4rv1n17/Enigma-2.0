@@ -287,8 +287,9 @@ class CaseDelegate(QStyledItemDelegate):
         p.setFont(f)
         p.setPen(QColor(theme.TEXT))
         ty = r.top() + 12 + img
+        name = p.fontMetrics().elidedText(pick(case.name), Qt.ElideRight, int(r.width() - 16))
         p.drawText(QRectF(r.left() + 8, ty, r.width() - 16, 18),
-                   Qt.AlignHCenter | Qt.AlignVCenter, pick(case.name))
+                   Qt.AlignHCenter | Qt.AlignVCenter, name)
         f.setPixelSize(11)
         f.setWeight(QFont.Normal)
         p.setFont(f)
