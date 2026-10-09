@@ -40,6 +40,7 @@ jobs:
         shell: pwsh
         run: |
           $p = Start-Process -FilePath "dist\EnigmaCube\EnigmaCube.exe" -ArgumentList "--selftest", "$PWD\screenshots_exe" -PassThru
+          $null = $p.Handle  # needed so that ExitCode is available later
           if (-not $p.WaitForExit(180000)) { Stop-Process -Id $p.Id -Force; "self-test timed out"; Get-Content screenshots_exe\steps.txt -ErrorAction SilentlyContinue; exit 1 }
           Get-Content screenshots_exe\steps.txt -Tail 3 -ErrorAction SilentlyContinue
           if ($p.ExitCode -ne 0) { Get-Content screenshots_exe\error.txt, screenshots_exe\fault.txt -ErrorAction SilentlyContinue; exit 1 }
