@@ -1,0 +1,155 @@
+Opened log file 'out\stack.txt'
+
+************* Preparing the environment for Debugger Extensions Gallery repositories **************
+   ExtensionRepository : Implicit
+   UseExperimentalFeatureForNugetShare : true
+   AllowNugetExeUpdate : true
+   NonInteractiveNuget : true
+   AllowNugetMSCredentialProviderInstall : true
+   AllowParallelInitializationOfLocalRepositories : true
+
+   EnableRedirectToV8JsProvider : false
+
+   -- Configuring repositories
+      ----> Repository : LocalInstalled, Enabled: true
+      ----> Repository : UserExtensions, Enabled: true
+
+>>>>>>>>>>>>> Preparing the environment for Debugger Extensions Gallery repositories completed, duration 0.016 seconds
+
+************* Waiting for Debugger Extensions Gallery to Initialize **************
+
+>>>>>>>>>>>>> Waiting for Debugger Extensions Gallery to Initialize completed, duration 0.187 seconds
+   ----> Repository : UserExtensions, Enabled: true, Packages count: 0
+   ----> Repository : LocalInstalled, Enabled: true, Packages count: 30
+
+Microsoft (R) Windows Debugger Version 10.0.26100.8249 AMD64
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+CommandLine: C:\hostedtoolcache\windows\Python\3.12.10\x64\python.exe main.py --selftest shots
+NatVis script successfully loaded from 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\Visualizers\atlmfc.natvis'
+NatVis script successfully loaded from 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\Visualizers\ObjectiveC.natvis'
+NatVis script successfully loaded from 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\Visualizers\concurrency.natvis'
+NatVis script successfully loaded from 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\Visualizers\cpp_rest.natvis'
+NatVis script successfully loaded from 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\Visualizers\stl.natvis'
+NatVis script successfully loaded from 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\Visualizers\Windows.Data.Json.natvis'
+NatVis script successfully loaded from 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\Visualizers\Windows.Devices.Geolocation.natvis'
+NatVis script successfully loaded from 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\Visualizers\Windows.Devices.Sensors.natvis'
+NatVis script successfully loaded from 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\Visualizers\Windows.Media.natvis'
+NatVis script successfully loaded from 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\Visualizers\windows.natvis'
+NatVis script successfully loaded from 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\Visualizers\winrt.natvis'
+
+************* Path validation summary **************
+Response                         Time (ms)     Location
+Deferred                                       srv*
+Symbol search path is: srv*
+Executable search path is: 
+
++------------------------------------------------------------------------+
+| This target supports Hardware-enforced Stack Protection. A HW based    |
+| "Shadow Stack" may be available to assist in debugging and analysis.   |
+| See aka.ms/userhsp for more info.                                      |
+|                                                                        |
+| dps @ssp                                                               |
+|                                                                        |
++------------------------------------------------------------------------+
+
+ModLoad: 00007ff7`ec5d0000 00007ff7`ec5ea000   python.exe
+ModLoad: 00007ffd`f2500000 00007ffd`f2764000   ntdll.dll
+ModLoad: 00007ffd`f14a0000 00007ffd`f1569000   C:\Windows\System32\KERNEL32.DLL
+ModLoad: 00007ffd`ef9d0000 00007ffd`efdbe000   C:\Windows\System32\KERNELBASE.dll
+ModLoad: 00007ffd`efdd0000 00007ffd`eff1b000   C:\Windows\System32\ucrtbase.dll
+ModLoad: 00007ffd`c2750000 00007ffd`c276e000   C:\hostedtoolcache\windows\Python\3.12.10\x64\VCRUNTIME140.dll
+ModLoad: 00007ffd`b28c0000 00007ffd`b2f6b000   C:\hostedtoolcache\windows\Python\3.12.10\x64\python312.dll
+ModLoad: 00007ffd`f0c50000 00007ffd`f0cce000   C:\Windows\System32\WS2_32.dll
+ModLoad: 00007ffd`e4350000 00007ffd`e435b000   C:\Windows\SYSTEM32\VERSION.dll
+ModLoad: 00007ffd`f1d60000 00007ffd`f1e78000   C:\Windows\System32\RPCRT4.dll
+ModLoad: 00007ffd`f2200000 00007ffd`f22a9000   C:\Windows\System32\msvcrt.dll
+ModLoad: 00007ffd`f1370000 00007ffd`f1424000   C:\Windows\System32\ADVAPI32.dll
+ModLoad: 00007ffd`f1ef0000 00007ffd`f1f97000   C:\Windows\System32\sechost.dll
+ModLoad: 00007ffd`ef500000 00007ffd`ef52a000   C:\Windows\SYSTEM32\bcrypt.dll
+ModLoad: 00007ffd`eff20000 00007ffd`effcc000   C:\Windows\System32\bcryptprimitives.dll
+ModLoad: 00000241`d1fa0000 00000241`d1faf000   C:\hostedtoolcache\windows\Python\3.12.10\x64\python3.DLL
+ModLoad: 00000241`d1fa0000 00000241`d1faf000   C:\hostedtoolcache\windows\Python\3.12.10\x64\python3.DLL
+ModLoad: 00007ffd`b90e0000 00007ffd`b9343000   C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\PyQt5\QtCore.pyd
+ModLoad: 00007ffd`b22f0000 00007ffd`b28b6000   C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\PyQt5\Qt5\bin\Qt5Core.dll
+ModLoad: 00007ffd`f1fa0000 00007ffd`f2137000   C:\Windows\System32\ole32.dll
+ModLoad: 00007ffd`e97c0000 00007ffd`e97e1000   C:\Windows\SYSTEM32\MPR.dll
+ModLoad: 00007ffd`f00a0000 00007ffd`f0143000   C:\Windows\System32\msvcp_win.dll
+ModLoad: 00007ffd`f0ce0000 00007ffd`f0d0b000   C:\Windows\System32\GDI32.dll
+ModLoad: 00007ffd`ee930000 00007ffd`ee95b000   C:\Windows\SYSTEM32\USERENV.dll
+ModLoad: 00007ffd`ef790000 00007ffd`ef7b7000   C:\Windows\System32\win32u.dll
+ModLoad: 00007ffd`f0150000 00007ffd`f027b000   C:\Windows\System32\gdi32full.dll
+ModLoad: 00007ffd`f0d10000 00007ffd`f0ed5000   C:\Windows\System32\USER32.dll
+ModLoad: 00007ffd`e4470000 00007ffd`e448a000   C:\Windows\SYSTEM32\NETAPI32.dll
+ModLoad: 00007ffd`f1830000 00007ffd`f1bb6000   C:\Windows\System32\combase.dll
+ModLoad: 00007ffd`f04f0000 00007ffd`f0c43000   C:\Windows\System32\SHELL32.dll
+ModLoad: 00007ffd`ef620000 00007ffd`ef78a000   C:\Windows\System32\wintypes.dll
+ModLoad: 00007ffd`ecf70000 00007ffd`ecfa5000   C:\Windows\SYSTEM32\WINMM.dll
+ModLoad: 00007ffd`b9b00000 00007ffd`b9b91000   C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\PyQt5\Qt5\bin\MSVCP140.dll
+ModLoad: 00007ffd`d5580000 00007ffd`d5589000   C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\PyQt5\Qt5\bin\MSVCP140_1.dll
+ModLoad: 00007ffd`d5550000 00007ffd`d555c000   C:\hostedtoolcache\windows\Python\3.12.10\x64\VCRUNTIME140_1.dll
+ModLoad: 00007ffd`ede60000 00007ffd`ede6d000   C:\Windows\SYSTEM32\NETUTILS.DLL
+ModLoad: 00007ffd`e9790000 00007ffd`e97b9000   C:\Windows\SYSTEM32\SRVCLI.DLL
+ModLoad: 00007ffd`eead0000 00007ffd`eeadc000   C:\Windows\SYSTEM32\CRYPTBASE.DLL
+ModLoad: 00007ffd`f1460000 00007ffd`f1491000   C:\Windows\System32\IMM32.DLL
+ModLoad: 00007ffd`c2720000 00007ffd`c2743000   C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\PyQt5\sip.cp312-win_amd64.pyd
+ModLoad: 00007ffd`b7d90000 00007ffd`b7ff5000   C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\PyQt5\QtGui.pyd
+ModLoad: 00007ffd`b1c30000 00007ffd`b22eb000   C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\PyQt5\Qt5\bin\Qt5Gui.dll
+ModLoad: 00007ffd`ed510000 00007ffd`ed64b000   C:\Windows\SYSTEM32\dxgi.dll
+ModLoad: 00007ffd`ea4e0000 00007ffd`ea742000   C:\Windows\SYSTEM32\d3d11.dll
+ModLoad: 00007ffd`ef490000 00007ffd`ef4ee000   C:\Windows\SYSTEM32\powrprof.dll
+ModLoad: 00007ffd`ef470000 00007ffd`ef484000   C:\Windows\SYSTEM32\UMPDC.dll
+ModLoad: 00007ffd`b1740000 00007ffd`b1c2c000   C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\PyQt5\QtWidgets.pyd
+ModLoad: 00007ffd`b11f0000 00007ffd`b1731000   C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\PyQt5\Qt5\bin\Qt5Widgets.dll
+ModLoad: 00007ffd`ed1e0000 00007ffd`ed28b000   C:\Windows\SYSTEM32\UxTheme.dll
+ModLoad: 00007ffd`ed670000 00007ffd`ed6a0000   C:\Windows\SYSTEM32\dwmapi.dll
+ModLoad: 00007ffd`d4ef0000 00007ffd`d4ef8000   C:\hostedtoolcache\windows\Python\3.12.10\x64\DLLs\_uuid.pyd
+ModLoad: 00007ffd`ba8d0000 00007ffd`ba8e6000   C:\hostedtoolcache\windows\Python\3.12.10\x64\DLLs\_bz2.pyd
+ModLoad: 00007ffd`b9ad0000 00007ffd`b9af9000   C:\hostedtoolcache\windows\Python\3.12.10\x64\DLLs\_lzma.pyd
+ModLoad: 00007ffd`b7c20000 00007ffd`b7d8d000   C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\PyQt5\Qt5\plugins\platforms\qwindows.dll
+ModLoad: 00007ffd`f1570000 00007ffd`f1647000   C:\Windows\System32\OLEAUT32.dll
+ModLoad: 00007ffd`ec620000 00007ffd`ec649000   C:\Windows\SYSTEM32\WTSAPI32.dll
+ModLoad: 00007ffd`ef850000 00007ffd`ef9c7000   C:\Windows\System32\CRYPT32.dll
+ModLoad: 00007ffd`ee5b0000 00007ffd`ee5f9000   C:\Windows\SYSTEM32\SspiCli.dll
+ModLoad: 00007ffd`ed910000 00007ffd`ed92b000   C:\Windows\SYSTEM32\kernel.appcore.dll
+ModLoad: 00007ffd`f2340000 00007ffd`f2434000   C:\Windows\System32\SHCore.dll
+ModLoad: 00007ffd`e7a60000 00007ffd`e82c1000   C:\Windows\SYSTEM32\windows.storage.dll
+ModLoad: 00007ffd`f0380000 00007ffd`f03e7000   C:\Windows\System32\shlwapi.dll
+ModLoad: 00007ffd`ef530000 00007ffd`ef559000   C:\Windows\SYSTEM32\profapi.dll
+ModLoad: 00007ffd`b9aa0000 00007ffd`b9ac6000   C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\PyQt5\Qt5\plugins\styles\qwindowsvistastyle.dll
+ModLoad: 00007ffd`d4920000 00007ffd`d492d000   C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\PyQt5\Qt5\plugins\imageformats\qgif.dll
+ModLoad: 00007ffd`d1ee0000 00007ffd`d1eef000   C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\PyQt5\Qt5\plugins\imageformats\qicns.dll
+ModLoad: 00007ffd`d0270000 00007ffd`d027d000   C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\PyQt5\Qt5\plugins\imageformats\qico.dll
+ModLoad: 00007ffd`b9a30000 00007ffd`b9a9b000   C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\PyQt5\Qt5\plugins\imageformats\qjpeg.dll
+ModLoad: 00007ffd`d01a0000 00007ffd`d01ac000   C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\PyQt5\Qt5\plugins\imageformats\qsvg.dll
+ModLoad: 00007ffd`b9950000 00007ffd`b99a4000   C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\PyQt5\Qt5\bin\Qt5Svg.dll
+ModLoad: 00007ffd`cf820000 00007ffd`cf82c000   C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\PyQt5\Qt5\plugins\imageformats\qtga.dll
+ModLoad: 00007ffd`b95b0000 00007ffd`b9613000   C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\PyQt5\Qt5\plugins\imageformats\qtiff.dll
+ModLoad: 00007ffd`ce840000 00007ffd`ce84b000   C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\PyQt5\Qt5\plugins\imageformats\qwbmp.dll
+ModLoad: 00007ffd`b9050000 00007ffd`b90d3000   C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\PyQt5\Qt5\plugins\imageformats\qwebp.dll
+ModLoad: 00007ffd`ea270000 00007ffd`ea4d9000   C:\Windows\system32\dwrite.dll
+ModLoad: 00007ffd`b1030000 00007ffd`b11e3000   C:\Windows\system32\d3d9.dll
+ModLoad: 00007ffd`ed3c0000 00007ffd`ed404000   C:\Windows\SYSTEM32\dxcore.dll
+ModLoad: 00007ffd`d41a0000 00007ffd`d474e000   C:\Windows\SYSTEM32\d3d10warp.dll
+ModLoad: 00007ffd`eb3b0000 00007ffd`eb412000   C:\Windows\SYSTEM32\directxdatabasehelper.dll
+ModLoad: 00007ffd`ed700000 00007ffd`ed714000   C:\Windows\SYSTEM32\resourcepolicyclient.dll
+ModLoad: 00007ffd`f1bc0000 00007ffd`f1d1f000   C:\Windows\System32\MSCTF.dll
+ModLoad: 00007ffd`f2140000 00007ffd`f21f0000   C:\Windows\System32\clbcatq.dll
+ModLoad: 00007ffd`d1d40000 00007ffd`d1d9a000   C:\Windows\system32\dataexchange.dll
+ModLoad: 00007ffd`d2e40000 00007ffd`d3085000   C:\Windows\system32\twinapi.appcore.dll
+ModLoad: 00007ffd`ba8b0000 00007ffd`ba8d0000   C:\hostedtoolcache\windows\Python\3.12.10\x64\DLLs\_ctypes.pyd
+ModLoad: 00007ffd`cce50000 00007ffd`cce5b000   C:\hostedtoolcache\windows\Python\3.12.10\x64\DLLs\libffi-8.dll
+ModLoad: 00007ffd`e5170000 00007ffd`e52b8000   C:\Windows\SYSTEM32\textinputframework.dll
+ModLoad: 00007ffd`eb890000 00007ffd`eb9b7000   C:\Windows\SYSTEM32\CoreMessaging.dll
+ModLoad: 00007ffd`d4a90000 00007ffd`d4d73000   C:\Windows\SYSTEM32\CoreUIComponents.dll
+NatVis script unloaded from 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\Visualizers\atlmfc.natvis'
+NatVis script unloaded from 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\Visualizers\ObjectiveC.natvis'
+NatVis script unloaded from 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\Visualizers\concurrency.natvis'
+NatVis script unloaded from 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\Visualizers\cpp_rest.natvis'
+NatVis script unloaded from 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\Visualizers\stl.natvis'
+NatVis script unloaded from 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\Visualizers\Windows.Data.Json.natvis'
+NatVis script unloaded from 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\Visualizers\Windows.Devices.Geolocation.natvis'
+NatVis script unloaded from 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\Visualizers\Windows.Devices.Sensors.natvis'
+NatVis script unloaded from 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\Visualizers\Windows.Media.natvis'
+NatVis script unloaded from 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\Visualizers\windows.natvis'
+NatVis script unloaded from 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\Visualizers\winrt.natvis'
