@@ -21,6 +21,11 @@ from .stats import (DNF, INF, OK, PLUS2, STAT_ROWS, SessionStats, Solve, fmt_avg
                     fmt_ms, fmt_solve, parse_time, trimmed_indices)
 from .stats import average as stats_average
 from .stats import mean as stats_mean
+from . import achievements as ach
+from . import learn
+from .i18n import pick
+from .pages import AchievementsPage, ReferencePage
+from .training import TrainingHub, TrainingWidget, TrainingWindow
 from .widgets import ScramblePreview, TimeChart, TimeHistogram, TimerDisplay, Toast
 
 # PyInstaller unpacks bundled files to sys._MEIPASS
@@ -77,6 +82,8 @@ class _KeyFilter(QObject):
                      QEvent.MouseButtonPress):
             return False
         w = self.win
+        if getattr(w, "page", 0) != 0:
+            return False
         if QApplication.activeModalWidget() is not None or \
                 QApplication.activePopupWidget() is not None or \
                 QApplication.activeWindow() is not w:
@@ -116,6 +123,13 @@ class MainWindow(QMainWindow):
         self.scramble = ""
         self.stats = None
         self._loading = False
+        self.page = 0
+        self.training = None
+        self.extra_windows = []
+        self.hub = TrainingHub(store, self)
+        self.page_widgets = {0: None}
+        self.achievements_page = None
+        self.hub.changed.connect(self._training_changed)
 
         self.setWindowTitle(tr("app_title"))
         icon_path = os.path.join(ASSETS, "app_icon.png")
@@ -143,6 +157,7 @@ class MainWindow(QMainWindow):
             self.resize(1280, 800)
 
         self.switch_session(self.store.current_id)
+        self.check_achievements(quiet=True)   # unlock earned ones without a toast storm
 
     # ==================================================================
     # UI construction
@@ -170,30 +185,47 @@ class MainWindow(QMainWindow):
         logo.mousePressEvent = lambda e: self.show_about()
         top.addWidget(logo)
         top.addSpacing(16)
-        top.addStretch(1)
-
-        self.puzzle_group = QButtonGroup(self)
-        self.puzzle_group.setExclusive(True)
-        self.puzzle_buttons = {}
-        for i, (pid, label, name) in enumerate(scr.PUZZLES):
-            if pid == "333oh":
-                sep = QFrame()
-                sep.setFixedSize(1, 22)
-                sep.setStyleSheet("background: %s;" % theme.BORDER)
-                top.addSpacing(4)
-                top.addWidget(sep)
-                top.addSpacing(4)
-            b = QPushButton(label)
-            b.setObjectName("puzzle")
+        self.nav_group = QButtonGroup(self)
+        self.nav_group.setExclusive(True)
+        for i, key in enumerate(("nav_timer", "nav_training", "nav_reference", "nav_achievements")):
+            b = QPushButton(tr(key))
+            b.setObjectName("nav")
             b.setCheckable(True)
-            b.setToolTip(name)
+            b.setChecked(i == 0)
             b.setFocusPolicy(Qt.NoFocus)
-            self.puzzle_group.addButton(b, i)
-            self.puzzle_buttons[pid] = b
+            self.nav_group.addButton(b, i)
             top.addWidget(b)
-        self.puzzle_group.buttonClicked[int].connect(
-            lambda i: self.select_puzzle(scr.PUZZLES[i][0]))
+        self.nav_group.buttonClicked[int].connect(self.set_page)
+        top.addStretch(1)
+        # event selector: one quiet button with a menu (fits any window width)
+        self.puzzle_bar = QPushButton()
+        self.puzzle_bar.setObjectName("event")
+        self.puzzle_bar.setFocusPolicy(Qt.NoFocus)
+        self.puzzle_bar.setCursor(Qt.PointingHandCursor)
+        self.event_menu = QMenu(self.puzzle_bar)
+        self.event_actions = {}
+        groups = (("222", "333", "444", "555", "666", "777"),
+                  ("pyram", "skewb", "minx", "clock", "sq1"),
+                  ("333oh", "333bf", "333fm"))
+        for gi, group in enumerate(groups):
+            if gi:
+                self.event_menu.addSeparator()
+            for pid in group:
+                act = QAction(scr.PUZZLE_NAME[pid], self.event_menu)
+                act.setCheckable(True)
+                act.triggered.connect(lambda _=False, p=pid: self.select_puzzle(p))
+                self.event_menu.addAction(act)
+                self.event_actions[pid] = act
+        self.puzzle_bar.setMenu(self.event_menu)
+        top.addWidget(self.puzzle_bar)
         top.addSpacing(10)
+
+        self.window_btn = QPushButton("⧉")
+        self.window_btn.setObjectName("icon")
+        self.window_btn.setToolTip(tr("new_window"))
+        self.window_btn.setFocusPolicy(Qt.NoFocus)
+        self.window_btn.clicked.connect(self.open_training_window)
+        top.addWidget(self.window_btn)
 
         self.minimal_btn = QPushButton("◧")
         self.minimal_btn.setObjectName("icon")
@@ -213,9 +245,13 @@ class MainWindow(QMainWindow):
         root.addWidget(self.top_bar)
 
         # ---- body ----------------------------------------------------
-        body = QHBoxLayout()
+        self.pages = QStackedWidget()
+        self.timer_page = QWidget()
+        body = QHBoxLayout(self.timer_page)
+        body.setContentsMargins(0, 0, 0, 0)
+        self.pages.addWidget(self.timer_page)
         body.setSpacing(28)
-        root.addLayout(body, 1)
+        root.addWidget(self.pages, 1)
 
         # left: statistics + list of times
         self.left_panel = _panel()
@@ -258,6 +294,8 @@ class MainWindow(QMainWindow):
         self.stats_table.verticalHeader().setDefaultSectionSize(28)
         self.stats_table.setFixedHeight(28 * len(STAT_ROWS) + 30)
         self.stats_table.cellClicked.connect(self._on_stat_clicked)
+        self.stats_table.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.stats_table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         for r, (label, _, _) in enumerate(STAT_ROWS):
             it = QTableWidgetItem(tr("single") if label == "single" else label)
             it.setForeground(self._qcolor(theme.MUTED))
@@ -483,9 +521,9 @@ class MainWindow(QMainWindow):
         if sess is None:
             return
         self._loading = True
-        btn = self.puzzle_buttons.get(sess.puzzle)
-        if btn:
-            btn.setChecked(True)
+        for pid, act in self.event_actions.items():
+            act.setChecked(pid == sess.puzzle)
+        self.puzzle_bar.setText("%s  ▾" % scr.PUZZLE_NAME.get(sess.puzzle, sess.puzzle))
         self.session_combo.clear()
         for s in self.store.sessions_for(sess.puzzle):
             self.session_combo.addItem(s.name, s.id)
@@ -547,6 +585,8 @@ class MainWindow(QMainWindow):
     # Scrambles
     # ==================================================================
     def new_scramble(self, force=False):
+        if getattr(self, "page", 0) != 0 and force is not True and self.scramble:
+            return
         if self.state != IDLE and force is not True:
             return
         puzzle = self.session.puzzle
@@ -734,6 +774,10 @@ class MainWindow(QMainWindow):
         self.refresh()
         self.save()
         self._check_pb(old)
+        if not self.toast.isVisible():
+            self.check_achievements()
+        else:
+            ach.check(self.store)   # unlock silently, the PB toast is showing
 
     def _check_pb(self, old):
         if old is None or self.stats is None:
@@ -991,8 +1035,68 @@ class MainWindow(QMainWindow):
         storage.export_csv(s, path, int(self.settings.get("decimals", 2)))
         self.toast.show_message(tr("exported") % os.path.basename(path), 2500)
 
-    def toggle_minimal(self):
+    def set_page(self, idx):
         if self.state != IDLE:
+            self.nav_group.button(self.page).setChecked(True)
+            return
+        if self.page_widgets.get(idx) is None and idx > 0:
+            if idx == 1:
+                # open the path of the event the user is timing
+                path = self.session.puzzle if self.session.puzzle in learn.PATHS else "333"
+                if not self.store.settings.get("train_path"):
+                    self.hub.path = path
+                w = self.training = TrainingWidget(self.hub)
+            elif idx == 2:
+                w = ReferencePage(self.hub)
+                pid = self.session.puzzle
+                w.show_puzzle({"555": "444", "666": "444", "777": "444", "333oh": "333",
+                               "333bf": "333", "333fm": "333"}.get(pid, pid))
+                ach.set_flag(self.store, "reference")
+            else:
+                w = self.achievements_page = AchievementsPage(self.store)
+            self.page_widgets[idx] = w
+            self.pages.addWidget(w)
+        if idx == 3 and self.achievements_page is not None:
+            self.achievements_page.refresh()
+        self.page = idx
+        self.pages.setCurrentWidget(self.page_widgets[idx] if idx else self.timer_page)
+        if idx in (1, 2):
+            self.check_achievements()
+        self.puzzle_bar.setVisible(idx == 0)
+        self.minimal_btn.setVisible(idx == 0)
+        b = self.nav_group.button(idx)
+        if b and not b.isChecked():
+            b.setChecked(True)
+
+    def _training_changed(self):
+        ach.mark_day(self.store)
+        self.check_achievements()
+
+    def check_achievements(self, quiet=False):
+        new, _ = ach.check(self.store)
+        if not new:
+            return
+        self.save()
+        if quiet:
+            return
+        if len(new) == 1:
+            self.toast.show_message("★  " + tr("ach_new") % pick(new[0]["name"]), 4500)
+        else:
+            self.toast.show_message("★  " + tr("ach_many") % len(new), 4500)
+
+    def open_training_window(self):
+        ach.set_flag(self.store, "training_window")
+        self.check_achievements()
+        win = TrainingWindow(self.hub, self.windowIcon())
+        self.extra_windows.append(win)
+        win.destroyed.connect(lambda *_: self.extra_windows.remove(win)
+                              if win in self.extra_windows else None)
+        geo = self.geometry()
+        win.move(geo.x() + 60, geo.y() + 40)
+        win.show()
+
+    def toggle_minimal(self):
+        if self.state != IDLE or self.page != 0:
             return
         self.settings["minimal"] = not self.settings.get("minimal")
         self.minimal_btn.setChecked(bool(self.settings["minimal"]))
@@ -1035,6 +1139,8 @@ class MainWindow(QMainWindow):
             self.toast.move(int((self.timer_area.width() - self.toast.width()) / 2), 14)
 
     def closeEvent(self, e):
+        for w in list(self.extra_windows):
+            w.close()
         self.settings["geometry"] = self.saveGeometry().toBase64().data().decode("ascii")
         self.save()
         QMainWindow.closeEvent(self, e)

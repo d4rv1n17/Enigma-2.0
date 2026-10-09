@@ -1,13 +1,13 @@
-# Builds EnigmaCube-Setup-*.exe on GitHub's Windows machines.
-# Push to GitHub, open the "Actions" tab and download the installer
-# from the "EnigmaCube-Setup" artifact. Tagging a commit v2.1 etc. also
-# attaches the installer to a GitHub Release.
+# Builds EnigmaCube-Setup-<version>.exe on GitHub's Windows machines.
+# Open the "Actions" tab and download the installer from the "EnigmaCube-Setup"
+# artifact. Pushing a tag such as v3.0 also attaches it to a GitHub Release.
 name: Build Windows installer
 
 on:
   push:
     branches: [main, master]
     tags: ["v*"]
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -22,17 +22,50 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install dependencies
-        run: python -m pip install -r requirements.txt pyinstaller pillow
+        run: python -m pip install -r requirements.txt pyinstaller
       - name: Run tests
         run: python -m unittest discover -s tests
-      - name: Build exe
-        run: python -m PyInstaller --noconfirm --clean --onedir --windowed --name EnigmaCube --icon assets\app.ico --add-data "assets;assets" --version-file installer\version_info.txt main.py
-      - name: Build installer
+      - name: Do not show Windows error dialogs (they would hang the job)
         shell: pwsh
         run: |
-          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
-          if (!(Test-Path $iscc)) { choco install innosetup -y --no-progress }
-          & $iscc installer\EnigmaCube.iss
+          New-Item -Force -Path "HKCU:\Software\Microsoft\Windows\Windows Error Reporting" | Out-Null
+          Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\Windows Error Reporting" -Name DontShowUI -Value 1 -Type DWord
+      - name: GUI self-test (source)
+        timeout-minutes: 5
+        run: python main.py --selftest screenshots
+      - name: Build installer
+        run: python installer/build.py
+      - name: GUI self-test (built exe)
+        timeout-minutes: 5
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath "dist\EnigmaCube\EnigmaCube.exe" -ArgumentList "--selftest", "$PWD\screenshots_exe" -PassThru
+          $null = $p.Handle  # needed so that ExitCode is available later
+          if (-not $p.WaitForExit(180000)) { Stop-Process -Id $p.Id -Force; "self-test timed out"; Get-Content screenshots_exe\steps.txt -ErrorAction SilentlyContinue; exit 1 }
+          Get-Content screenshots_exe\steps.txt -Tail 3 -ErrorAction SilentlyContinue
+          if ($p.ExitCode -ne 0) { Get-Content screenshots_exe\error.txt, screenshots_exe\fault.txt -ErrorAction SilentlyContinue; exit 1 }
+      - name: Size report
+        shell: pwsh
+        run: |
+          Get-ChildItem Output\*.exe | ForEach-Object { "{0}: {1:N1} MB" -f $_.Name, ($_.Length / 1MB) }
+          "{0:N1} MB app folder" -f ((Get-ChildItem dist\EnigmaCube -Recurse | Measure-Object Length -Sum).Sum / 1MB)
+          Get-ChildItem Output\*.exe | ForEach-Object { "{0:N1}" -f ($_.Length / 1MB) } | Out-File -Encoding ascii screenshots\setup_size_mb.txt
+      - name: Publish screenshots to the ci-screenshots branch
+        if: always() && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch')
+        shell: pwsh
+        run: |
+          $d = Join-Path $env:RUNNER_TEMP "shots"
+          New-Item -ItemType Directory -Force $d | Out-Null
+          Copy-Item screenshots\* $d -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force (Join-Path $d "exe") | Out-Null
+          Copy-Item screenshots_exe\* (Join-Path $d "exe") -ErrorAction SilentlyContinue
+          Set-Location $d
+          git init -q
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          git commit -qm "CI screenshots for ${{ github.sha }}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:ci-screenshots
       - uses: actions/upload-artifact@v4
         with:
           name: EnigmaCube-Setup

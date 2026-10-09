@@ -244,17 +244,7 @@ def _side_colour(angle):
 
 def sq1_state(scramble):
     """Return (units, piece_of): 24 unit ids after the scramble."""
-    units = list(range(24))
-    piece_of = list(_SQ1_START)
-    for tok in scramble.split():
-        m = re.match(r"^\(?(-?\d+),(-?\d+)\)?(/?)$", tok.replace(" ", ""))
-        if m:
-            units = _sq1_twist(units, int(m.group(1)), int(m.group(2)))
-            if m.group(3):
-                units = _sq1_slash(units)
-        elif tok == "/":
-            units = _sq1_slash(units)
-    return units, piece_of
+    return sq1_units(scramble), list(_SQ1_START)
 
 
 def sq1_polygons(scramble):
@@ -319,3 +309,46 @@ def sq1_slice_lines():
             pts.append((cx + math.cos(a) * r2 * 1.02, -y if layer == 0 else y))
         lines.append((pts[0], pts[1]))
     return lines
+
+
+# ---------------------------------------------------------------------------
+# Square-1 algorithm helpers
+# ---------------------------------------------------------------------------
+
+_SQ1_TOKEN = re.compile(r"\(\s*(-?\d+)\s*,\s*(-?\d+)\s*\)|/")
+
+
+def sq1_parse(alg):
+    """'(1,0) / (-1,2) /' -> [(1, 0), '/', (-1, 2), '/']"""
+    out = []
+    for m in _SQ1_TOKEN.finditer(alg):
+        if m.group(0) == "/":
+            out.append("/")
+        else:
+            out.append((int(m.group(1)), int(m.group(2))))
+    return out
+
+
+def sq1_format(moves):
+    parts = []
+    for mv in moves:
+        if mv == "/":
+            parts.append("/")
+        else:
+            parts.append("(%d,%d)" % mv)
+    return " ".join(parts)
+
+
+def sq1_invert(alg):
+    out = []
+    for mv in reversed(sq1_parse(alg)):
+        out.append(mv if mv == "/" else (-mv[0], -mv[1]))
+    return sq1_format(out)
+
+
+def sq1_units(alg):
+    """Unit ids after applying `alg` (with legality ignored) to a solved puzzle."""
+    units = list(range(24))
+    for mv in sq1_parse(alg):
+        units = _sq1_slash(units) if mv == "/" else _sq1_twist(units, mv[0], mv[1])
+    return units
