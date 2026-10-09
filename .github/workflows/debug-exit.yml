@@ -22,9 +22,29 @@ jobs:
           Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\Windows Error Reporting" -Name DontShowUI -Value 1 -Type DWord
       - name: selftest
         id: st
-        continue-on-error: true
         timeout-minutes: 5
-        run: python main.py --selftest shots
-      - name: CRASHED
-        if: steps.st.outcome == 'failure'
-        run: echo crashed
+        shell: pwsh
+        run: |
+          python main.py --selftest shots
+          $c = $LASTEXITCODE
+          "code=$c" >> $env:GITHUB_OUTPUT
+          $f = (Get-Content shots\fault.txt -Raw)
+          if ($f -and $f.Contains("violation")) { "av=1" >> $env:GITHUB_OUTPUT } else { "av=0" >> $env:GITHUB_OUTPUT }
+          $last = (Get-Content shots\steps.txt -Tail 1)
+          if ($last -eq "exit 0") { "done=1" >> $env:GITHUB_OUTPUT } else { "done=0" >> $env:GITHUB_OUTPUT }
+          exit 0
+      - name: EXIT_ZERO
+        if: steps.st.outputs.code == '0'
+        run: echo ok
+      - name: EXIT_AV
+        if: steps.st.outputs.code == '-1073741819'
+        run: echo av
+      - name: EXIT_ONE
+        if: steps.st.outputs.code == '1'
+        run: echo one
+      - name: FAULT_LOGGED
+        if: steps.st.outputs.av == '1'
+        run: echo fault
+      - name: STEPS_DONE
+        if: steps.st.outputs.done == '1'
+        run: echo done
