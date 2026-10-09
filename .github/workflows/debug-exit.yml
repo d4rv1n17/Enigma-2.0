@@ -1,0 +1,30 @@
+name: Debug exit crash
+on:
+  push:
+    branches: [debug-exit]
+jobs:
+  probe:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        skip: ["none", "chev", "menu", "w_training,w_reference,w_achievements,w_timer", "w_timer", "w_training", "w_reference", "w_achievements", "ov", "quiz", "setup", "chev,menu,ov,quiz,w_training,w_reference,w_achievements,w_timer"]
+    name: "skip=${{ matrix.skip }}"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r requirements.txt
+      - name: No error dialogs
+        shell: pwsh
+        run: |
+          New-Item -Force -Path "HKCU:\Software\Microsoft\Windows\Windows Error Reporting" | Out-Null
+          Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\Windows Error Reporting" -Name DontShowUI -Value 1 -Type DWord
+      - name: selftest
+        id: st
+        continue-on-error: true
+        timeout-minutes: 5
+        env:
+          ET_SKIP: ${{ matrix.skip }}
+        run: python main.py --selftest shots

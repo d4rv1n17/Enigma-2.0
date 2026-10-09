@@ -6,7 +6,7 @@ import sys
 from PyQt5.QtGui import QFontDatabase
 
 _ROOT = getattr(sys, "_MEIPASS", None) or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CHEVRON = os.path.join(_ROOT, "assets", "chevron.png").replace("\\", "/")
+CHEVRON = "" if "chev" in os.environ.get("ET_SKIP", "") else os.path.join(_ROOT, "assets", "chevron.png").replace("\\", "/")
 
 # Colours sampled from the Enigma Cube logo
 BG = "#121111"          # logo background
