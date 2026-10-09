@@ -38,22 +38,32 @@ def _grab(app, widget, folder, name):
     _step(folder, "saved " + name)
 
 
+_KEEP = []   # keeps Qt objects alive until the process exits
+
+
 def run(folder):
     os.makedirs(folder, exist_ok=True)
     import faulthandler
     fault = open(os.path.join(folder, "fault.txt"), "w")
     faulthandler.enable(fault)
+    code = 0
     try:
         _run(folder)
         _step(folder, "all screens done")
+        with open(os.path.join(folder, "ok.txt"), "w") as f:
+            f.write("ok")
     except Exception:  # noqa: BLE001 - report everything
         with open(os.path.join(folder, "error.txt"), "w", encoding="utf-8") as f:
             f.write(traceback.format_exc())
         traceback.print_exc()
-        return 1
-    with open(os.path.join(folder, "ok.txt"), "w") as f:
-        f.write("ok")
-    return 0
+        code = 1
+    from . import training
+    training.clear_caches()
+    _step(folder, "exit %d" % code)
+    sys.stdout.flush()
+    sys.stderr.flush()
+    fault.flush()
+    os._exit(code)
 
 
 def _run(folder):
@@ -68,6 +78,7 @@ def _run(folder):
     if hasattr(Qt, "AA_EnableHighDpiScaling"):
         QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
     app = QApplication.instance() or QApplication(sys.argv[:1])
+    _KEEP.append(app)
     app.setStyle("Fusion")
     app.setStyleSheet(theme.stylesheet())
 
@@ -76,6 +87,7 @@ def _run(folder):
         tmp = tempfile.mkdtemp()
         store = Store(os.path.join(tmp, "data.json"))
         win = MainWindow(store)
+        _KEEP.append(win)
         win.resize(1440, 880)
         win.show()
         _grab(app, win, folder, "%s_01_timer_empty" % lang)
@@ -148,6 +160,7 @@ def _setup_screens(app, folder, lang):
     app.setStyleSheet(setup_app.stylesheet(check))
     try:
         w = setup_app.SetupWindow("install", os.path.join(tmp, "Enigma Cube"))
+        _KEEP.append(w)
         w.set_lang(lang)
         w.show()
         _grab(app, w, folder, "%s_20_setup" % lang)
@@ -161,6 +174,7 @@ def _setup_screens(app, folder, lang):
         _grab(app, w, folder, "%s_22_setup_done" % lang)
         w.close()
         u = setup_app.SetupWindow("uninstall", os.path.join(tmp, "Enigma Cube"))
+        _KEEP.append(u)
         u.set_lang(lang)
         u.show()
         _grab(app, u, folder, "%s_23_uninstall" % lang)

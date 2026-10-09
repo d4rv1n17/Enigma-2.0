@@ -49,7 +49,19 @@ def main():
     i18n.set_language(lang)
     win = MainWindow(store)
     win.show()
-    sys.exit(app.exec_())
+    code = app.exec_()
+    # Everything is saved in closeEvent. Free Qt resources in a safe order and
+    # leave without Python's interpreter teardown, which can crash PyQt apps
+    # on Windows when objects outlive the QApplication.
+    from enigma_timer import training
+    training.clear_caches()
+    try:
+        store.save()
+    except (IOError, OSError):
+        pass
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(code)
 
 
 if __name__ == "__main__":

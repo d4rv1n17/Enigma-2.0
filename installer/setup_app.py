@@ -572,7 +572,9 @@ def main(argv=None):
     app.setStyleSheet(stylesheet(check))
     win = SetupWindow("uninstall" if uninstall else "install", install_dir)
     win.show()
-    return app.exec_()
+    code = app.exec_()
+    sys.stdout.flush()
+    os._exit(code)  # avoid PyQt teardown crashes on Windows
 
 
 if __name__ == "__main__":

@@ -71,6 +71,11 @@ def paint_shapes(p, rect, shapes):
 _PIX_CACHE = {}
 
 
+def clear_caches():
+    """Free cached pixmaps while Qt is still alive (avoids crashes on exit)."""
+    _PIX_CACHE.clear()
+
+
 def case_pixmap(case, size, auf=None, arrows=True):
     key = (case.id, size, auf, arrows)
     pm = _PIX_CACHE.get(key)
