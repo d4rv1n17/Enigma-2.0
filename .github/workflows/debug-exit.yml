@@ -8,7 +8,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        n: [1, 2, 3, 4, 5]
+        n: [1, 2, 3, 4]
+        v: ["nowin", "nosetup", "noovq", "nomenu"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -23,6 +24,9 @@ jobs:
       - name: selftest
         id: st
         timeout-minutes: 5
+        env:
+          ET_SKIP: ${{ matrix.v == 'nowin' && 'w_training,w_reference,w_achievements,w_timer' || (matrix.v == 'nosetup' && 'setup' || (matrix.v == 'noovq' && 'ov,quiz' || '')) }}
+          ET_MENU: ${{ matrix.v == 'nomenu' && 'none' || 'popgrab' }}
         shell: pwsh
         run: |
           python main.py --selftest shots
