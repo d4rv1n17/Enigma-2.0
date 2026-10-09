@@ -29,12 +29,17 @@ jobs:
         timeout-minutes: 5
         env:
           ET_MENU: none
-        run: python main.py --selftest shots
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force out | Out-Null
+          $py = (Get-Command python).Source
+          $cdb = "C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\cdb.exe"
+          & $cdb -g -G -o -logo out\stack.txt -c 'sxd -c2 "r; kn 60; ~*kn 25; lm; q" av; g' $py main.py --selftest shots
+          "cdb exit $LASTEXITCODE" | Out-File out\cdbexit.txt
       - name: Analyse
         if: always()
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force out | Out-Null
           "outcome: ${{ steps.st.outcome }}" | Out-File out\result.txt
           Get-ChildItem C:\dumps | Out-File -Append out\result.txt
           Copy-Item shots\fault.txt, shots\steps.txt out -ErrorAction SilentlyContinue
