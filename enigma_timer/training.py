@@ -74,22 +74,33 @@ _PIX_CACHE = {}
 
 
 def clear_caches():
-    """Free cached pixmaps while Qt is still alive (avoids crashes on exit).
+    """Shut Qt down in a safe order before the interpreter exits.
 
-    Style-sheet images (the combo box arrow) live in Qt's global caches, which
-    are destroyed after the platform plugin is unloaded; dropping the style
-    sheet first releases them while everything is still alive.
+    Cached pixmaps, style-sheet images and every window are released while
+    the QApplication is still alive, then the application object itself is
+    deleted, so nothing Qt-related is left for Windows to tear down when the
+    DLLs are unloaded (that used to cause random crashes on exit).
     """
     _PIX_CACHE.clear()
+    from PyQt5.QtCore import QEvent
     from PyQt5.QtGui import QPixmapCache
     from PyQt5.QtWidgets import QApplication
     app = QApplication.instance()
-    if app is not None:
-        for w in app.topLevelWidgets():
-            w.hide()
-        app.setStyleSheet("")
-        app.processEvents()
+    if app is None:
+        return
+    for w in app.topLevelWidgets():
+        w.hide()
+    app.setStyleSheet("")
+    for w in app.topLevelWidgets():
+        w.deleteLater()
+    QApplication.sendPostedEvents(None, QEvent.DeferredDelete)
+    app.processEvents()
     QPixmapCache.clear()
+    try:
+        from PyQt5 import sip
+    except ImportError:  # very old PyQt5
+        import sip
+    sip.delete(app)
 
 
 def case_pixmap(case, size, auf=None, arrows=True):
