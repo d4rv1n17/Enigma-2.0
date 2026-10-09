@@ -544,6 +544,11 @@ def _relaunch_from_temp(install_dir, quiet):
 
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
+    try:  # avoid crashes on exit (see main.py)
+        from PyQt5 import sip
+        sip.setdestroyonexit(False)
+    except ImportError:
+        pass
     uninstall = "--uninstall" in argv
     quiet = "--quiet" in argv
     install_dir = None
@@ -572,9 +577,7 @@ def main(argv=None):
     app.setStyleSheet(stylesheet(check))
     win = SetupWindow("uninstall" if uninstall else "install", install_dir)
     win.show()
-    code = app.exec_()
-    sys.stdout.flush()
-    os._exit(code)  # avoid PyQt teardown crashes on Windows
+    return app.exec_()
 
 
 if __name__ == "__main__":

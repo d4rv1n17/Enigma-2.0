@@ -60,10 +60,8 @@ def run(folder):
     from . import training
     training.clear_caches()
     _step(folder, "exit %d" % code)
-    sys.stdout.flush()
-    sys.stderr.flush()
     fault.flush()
-    os._exit(code)
+    return code
 
 
 def _run(folder):

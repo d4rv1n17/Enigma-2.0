@@ -18,7 +18,21 @@ from enigma_timer.storage import Store  # noqa: E402
 from enigma_timer.window import MainWindow  # noqa: E402
 
 
+def safe_exit_setup():
+    """Don't run C++ destructors at interpreter exit (PyQt's recommended fix for
+    crashes on exit when Qt objects outlive the QApplication)."""
+    try:
+        from PyQt5 import sip
+    except ImportError:  # very old PyQt5
+        try:
+            import sip
+        except ImportError:
+            return
+    sip.setdestroyonexit(False)
+
+
 def main():
+    safe_exit_setup()
     if "--selftest" in sys.argv:
         from enigma_timer import selftest
         i = sys.argv.index("--selftest")
@@ -50,18 +64,10 @@ def main():
     win = MainWindow(store)
     win.show()
     code = app.exec_()
-    # Everything is saved in closeEvent. Free Qt resources in a safe order and
-    # leave without Python's interpreter teardown, which can crash PyQt apps
-    # on Windows when objects outlive the QApplication.
+    # Free cached pixmaps while Qt is still alive; see safe_exit_setup().
     from enigma_timer import training
     training.clear_caches()
-    try:
-        store.save()
-    except (IOError, OSError):
-        pass
-    sys.stdout.flush()
-    sys.stderr.flush()
-    os._exit(code)
+    sys.exit(code)
 
 
 if __name__ == "__main__":
