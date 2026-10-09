@@ -44,6 +44,29 @@ jobs:
           if (-not $p.WaitForExit(180000)) { Stop-Process -Id $p.Id -Force; "self-test timed out"; Get-Content screenshots_exe\steps.txt -ErrorAction SilentlyContinue; exit 1 }
           Get-Content screenshots_exe\steps.txt -Tail 3 -ErrorAction SilentlyContinue
           if ($p.ExitCode -ne 0) { Get-Content screenshots_exe\error.txt, screenshots_exe\fault.txt -ErrorAction SilentlyContinue; exit 1 }
+      - name: Install, run and uninstall with the built setup
+        timeout-minutes: 8
+        shell: pwsh
+        run: |
+          $setup = (Get-ChildItem Output\EnigmaCube-Setup-*.exe | Select-Object -First 1).FullName
+          $dir = Join-Path $env:RUNNER_TEMP "Enigma Cube"
+          $p = Start-Process -FilePath $setup -ArgumentList "--quiet", "--dir", "`"$dir`"" -PassThru
+          $null = $p.Handle
+          if (-not $p.WaitForExit(240000)) { Stop-Process -Id $p.Id -Force; "setup timed out"; exit 1 }
+          if ($p.ExitCode -ne 0) { "setup exit code $($p.ExitCode)"; exit 1 }
+          if (-not (Test-Path (Join-Path $dir "EnigmaCube.exe"))) { "EnigmaCube.exe was not installed"; exit 1 }
+          "installed: $((Get-ChildItem $dir -Recurse | Measure-Object).Count) files"
+          $app = Join-Path $dir "EnigmaCube.exe"
+          $shots = Join-Path $PWD "screenshots_installed"
+          $p = Start-Process -FilePath $app -ArgumentList "--selftest", "`"$shots`"" -PassThru
+          $null = $p.Handle
+          if (-not $p.WaitForExit(180000)) { Stop-Process -Id $p.Id -Force; "installed app timed out"; exit 1 }
+          if ($p.ExitCode -ne 0) { "installed app self-test failed"; exit 1 }
+          $p = Start-Process -FilePath $app -ArgumentList "--uninstall", "--quiet" -PassThru
+          $null = $p.WaitForExit(60000)
+          for ($i = 0; $i -lt 60 -and (Test-Path $app); $i++) { Start-Sleep -Seconds 1 }
+          if (Test-Path $app) { "uninstall did not remove the app"; exit 1 }
+          "install / run / uninstall OK"
       - name: Size report
         shell: pwsh
         run: |
