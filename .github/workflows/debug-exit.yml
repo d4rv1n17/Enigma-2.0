@@ -28,3 +28,6 @@ jobs:
         env:
           ET_SKIP: ${{ matrix.skip }}
         run: python main.py --selftest shots
+      - name: CRASHED
+        if: steps.st.outcome == 'failure'
+        run: echo crashed
