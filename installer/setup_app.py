@@ -354,6 +354,9 @@ class SetupWindow(QWidget):
 
     def set_lang(self, lang):
         self.lang = lang
+        b = self.lang_group.button(0 if lang == "ru" else 1)
+        if b is not None and not b.isChecked():
+            b.setChecked(True)
         self.retranslate()
 
     def retranslate(self):

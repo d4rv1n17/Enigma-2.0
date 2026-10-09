@@ -23,15 +23,29 @@ def _pump(app, ms=150):
         time.sleep(0.01)
 
 
+_LOG = []
+
+
+def _step(folder, text):
+    _LOG.append(text)
+    with open(os.path.join(folder, "steps.txt"), "a", encoding="utf-8") as f:
+        f.write(text + "\n")
+
+
 def _grab(app, widget, folder, name):
     _pump(app)
     widget.grab().save(os.path.join(folder, name + ".png"))
+    _step(folder, "saved " + name)
 
 
 def run(folder):
     os.makedirs(folder, exist_ok=True)
+    import faulthandler
+    fault = open(os.path.join(folder, "fault.txt"), "w")
+    faulthandler.enable(fault)
     try:
         _run(folder)
+        _step(folder, "all screens done")
     except Exception:  # noqa: BLE001 - report everything
         with open(os.path.join(folder, "error.txt"), "w", encoding="utf-8") as f:
             f.write(traceback.format_exc())

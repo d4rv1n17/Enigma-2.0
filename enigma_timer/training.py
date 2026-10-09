@@ -12,7 +12,7 @@ import sys
 from PyQt5.QtCore import QObject, QPointF, QRectF, QSize, Qt, pyqtSignal
 from PyQt5.QtGui import (QColor, QFont, QImage, QPainter, QPen, QPixmap,
                          QPolygonF, QTextDocument)
-from PyQt5.QtWidgets import (QAbstractItemView, QButtonGroup, QFrame,
+from PyQt5.QtWidgets import (QAbstractItemView, QButtonGroup, QFrame, QSizePolicy,
                              QHBoxLayout, QLabel, QListView, QListWidget, QListWidgetItem,
                              QMainWindow, QPushButton, QStackedWidget,
                              QStyle, QStyledItemDelegate, QTextBrowser, QVBoxLayout, QWidget)
@@ -250,6 +250,7 @@ class CaseDelegate(QStyledItemDelegate):
 
 def _button(text, name=None, checkable=False):
     b = QPushButton(text)
+    b.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
     if name:
         b.setObjectName(name)
     b.setCheckable(checkable)
@@ -387,13 +388,16 @@ class TrainerView(QWidget):
         back = _button("←  " + tr("back"))
         back.clicked.connect(self.stop)
         top.addWidget(back)
-        self.title = QLabel()
-        self.title.setStyleSheet("font-size: 16px; font-weight: 600;")
-        top.addWidget(self.title, 1, Qt.AlignCenter)
-        self.stats = QLabel()
-        self.stats.setObjectName("muted")
-        top.addWidget(self.stats)
+        top.addStretch(1)
         lay.addLayout(top)
+        self.title = QLabel()
+        self.title.setAlignment(Qt.AlignCenter)
+        self.title.setStyleSheet("font-size: 20px; font-weight: 700;")
+        lay.addWidget(self.title)
+        self.stats = QLabel()
+        self.stats.setAlignment(Qt.AlignCenter)
+        self.stats.setObjectName("muted")
+        lay.addWidget(self.stats)
         lay.addStretch(1)
 
         self.img = QLabel()
@@ -565,6 +569,9 @@ class TrainingWidget(QWidget):
         self.progress_lbl.setObjectName("muted")
         bar.addWidget(self.progress_lbl)
         bar.addStretch(1)
+        pv.addLayout(bar)
+        bar = QHBoxLayout()
+        bar.setSpacing(4)
         self.view_group = QButtonGroup(self)
         self.view_group.setExclusive(True)
         self.view_btns = {}
@@ -573,8 +580,8 @@ class TrainingWidget(QWidget):
             self.view_group.addButton(b, i)
             self.view_btns[key] = b
             bar.addWidget(b)
-        self.view_group.buttonClicked[int].connect(lambda i: self.content.setCurrentIndex(i))
-        bar.addSpacing(10)
+        self.view_group.buttonClicked[int].connect(self._view_changed)
+        bar.addStretch(1)
         self.filter_group = QButtonGroup(self)
         self.filter_group.setExclusive(True)
         self.filter_btns = []
@@ -613,7 +620,7 @@ class TrainingWidget(QWidget):
         self.stack.addWidget(page)
 
         self.trainer = TrainerView(hub)
-        self.trainer.closed.connect(lambda: self.stack.setCurrentIndex(0))
+        self.trainer.closed.connect(self._trainer_closed)
         self.stack.addWidget(self.trainer)
 
         # --- details ---------------------------------------------------------
@@ -652,12 +659,29 @@ class TrainingWidget(QWidget):
         start_on_lesson = has_lesson and (not has_cases or not self.hub.progress.lesson_done(lv.lesson))
         idx = 0 if start_on_lesson else 1
         self.content.setCurrentIndex(idx)
+        self.stack.setCurrentIndex(0)
         b = self.view_group.button(idx)
         if b:
             b.setChecked(True)
         self._fill_grid()
         self.detail.show_case(None)
+        self._update_detail_visibility()
         self.refresh()
+
+    def _view_changed(self, idx):
+        self.content.setCurrentIndex(idx if (idx == 0 or self.grid.count()) else 2)
+        self._update_detail_visibility()
+
+    def _update_detail_visibility(self):
+        """The case panel only makes sense next to the grid of cases."""
+        on_grid = self.stack.currentIndex() == 0 and self.content.currentIndex() != 0
+        self.detail.setVisible(on_grid)
+        for b in self.filter_btns:
+            b.setVisible(on_grid)
+
+    def _trainer_closed(self):
+        self.stack.setCurrentIndex(0)
+        self._update_detail_visibility()
 
     def _filter_changed(self, idx):
         self.filter = ("all", "new", "learning", "learned")[idx]
@@ -665,6 +689,7 @@ class TrainingWidget(QWidget):
         if self.content.currentIndex() == 0 and self.level and self.level.lesson:
             return
         self.content.setCurrentIndex(1 if self.grid.count() else 2)
+        self._update_detail_visibility()
 
     def _visible_cases(self):
         if not self.level or not self.level.set_id:
@@ -722,12 +747,14 @@ class TrainingWidget(QWidget):
     def train_level(self):
         if self.level and self.level.set_id:
             self.stack.setCurrentIndex(1)
+            self._update_detail_visibility()
             self.trainer.start(pick(self.level.name), self.level.cases)
 
     def train_case(self, cid):
         case = algs.CASES.get(cid)
         if case:
             self.stack.setCurrentIndex(1)
+            self._update_detail_visibility()
             self.trainer.start(pick(case.name), [case])
 
 

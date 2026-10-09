@@ -49,7 +49,8 @@ class TimerDisplay(QWidget):
         p.drawText(main, Qt.AlignCenter, self._text)
         if self._sub:
             f2 = QFont(theme.ui_font())
-            f2.setPixelSize(max(12, int(sub_h * 0.5)))
+            px = int(min(sub_h * 0.5, r.width() * 1.7 / max(10, len(self._sub))))
+            f2.setPixelSize(max(11, px))
             p.setFont(f2)
             p.setPen(QColor(theme.MUTED))
             p.drawText(r.adjusted(0, r.height() - sub_h - 4, 0, 0),

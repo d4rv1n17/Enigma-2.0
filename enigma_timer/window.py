@@ -189,36 +189,27 @@ class MainWindow(QMainWindow):
             top.addWidget(b)
         self.nav_group.buttonClicked[int].connect(self.set_page)
         top.addStretch(1)
-        self.puzzle_bar = QWidget()
-        top_puzzles = QHBoxLayout(self.puzzle_bar)
-        top_puzzles.setContentsMargins(0, 0, 0, 0)
-        top_puzzles.setSpacing(2)
+        # event selector: one quiet button with a menu (fits any window width)
+        self.puzzle_bar = QPushButton()
+        self.puzzle_bar.setObjectName("event")
+        self.puzzle_bar.setFocusPolicy(Qt.NoFocus)
+        self.puzzle_bar.setCursor(Qt.PointingHandCursor)
+        self.event_menu = QMenu(self.puzzle_bar)
+        self.event_actions = {}
+        groups = (("222", "333", "444", "555", "666", "777"),
+                  ("pyram", "skewb", "minx", "clock", "sq1"),
+                  ("333oh", "333bf", "333fm"))
+        for gi, group in enumerate(groups):
+            if gi:
+                self.event_menu.addSeparator()
+            for pid in group:
+                act = QAction(scr.PUZZLE_NAME[pid], self.event_menu)
+                act.setCheckable(True)
+                act.triggered.connect(lambda _=False, p=pid: self.select_puzzle(p))
+                self.event_menu.addAction(act)
+                self.event_actions[pid] = act
+        self.puzzle_bar.setMenu(self.event_menu)
         top.addWidget(self.puzzle_bar)
-        top_main = top
-        top = top_puzzles
-
-        self.puzzle_group = QButtonGroup(self)
-        self.puzzle_group.setExclusive(True)
-        self.puzzle_buttons = {}
-        for i, (pid, label, name) in enumerate(scr.PUZZLES):
-            if pid == "333oh":
-                sep = QFrame()
-                sep.setFixedSize(1, 22)
-                sep.setStyleSheet("background: %s;" % theme.BORDER)
-                top.addSpacing(4)
-                top.addWidget(sep)
-                top.addSpacing(4)
-            b = QPushButton(label)
-            b.setObjectName("puzzle")
-            b.setCheckable(True)
-            b.setToolTip(name)
-            b.setFocusPolicy(Qt.NoFocus)
-            self.puzzle_group.addButton(b, i)
-            self.puzzle_buttons[pid] = b
-            top.addWidget(b)
-        self.puzzle_group.buttonClicked[int].connect(
-            lambda i: self.select_puzzle(scr.PUZZLES[i][0]))
-        top = top_main
         top.addSpacing(10)
 
         self.window_btn = QPushButton("⧉")
@@ -295,6 +286,8 @@ class MainWindow(QMainWindow):
         self.stats_table.verticalHeader().setDefaultSectionSize(28)
         self.stats_table.setFixedHeight(28 * len(STAT_ROWS) + 30)
         self.stats_table.cellClicked.connect(self._on_stat_clicked)
+        self.stats_table.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.stats_table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         for r, (label, _, _) in enumerate(STAT_ROWS):
             it = QTableWidgetItem(tr("single") if label == "single" else label)
             it.setForeground(self._qcolor(theme.MUTED))
@@ -520,9 +513,9 @@ class MainWindow(QMainWindow):
         if sess is None:
             return
         self._loading = True
-        btn = self.puzzle_buttons.get(sess.puzzle)
-        if btn:
-            btn.setChecked(True)
+        for pid, act in self.event_actions.items():
+            act.setChecked(pid == sess.puzzle)
+        self.puzzle_bar.setText("%s  ▾" % scr.PUZZLE_NAME.get(sess.puzzle, sess.puzzle))
         self.session_combo.clear()
         for s in self.store.sessions_for(sess.puzzle):
             self.session_combo.addItem(s.name, s.id)

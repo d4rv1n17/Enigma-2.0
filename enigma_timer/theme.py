@@ -79,6 +79,10 @@ QPushButton#tab { padding: 4px 8px; font-size: 11px; font-weight: 600; }
 QPushButton#tab:hover { background: transparent; }
 QPushButton#tab:checked { color: %(TEXT)s; }
 
+QPushButton#event { font-size: 14px; font-weight: 600; padding: 7px 12px; color: %(TEXT)s;
+                    background: %(PANEL2)s; border-radius: 9px; }
+QPushButton#event:hover { background: #2b2929; }
+QPushButton#event::menu-indicator { image: none; width: 0; }
 QPushButton#nav { font-size: 15px; font-weight: 600; padding: 6px 12px; color: %(MUTED)s; }
 QPushButton#nav:hover { background: transparent; color: %(TEXT)s; }
 QPushButton#nav:checked { color: %(TEXT)s; background: %(PANEL2)s; }
@@ -124,6 +128,7 @@ QTableWidget { background: transparent; border: none; gridline-color: transparen
                selection-background-color: transparent; outline: 0; }
 QTableWidget::item { padding: 2px 6px; border: none; }
 QTableWidget::item:hover { background: %(PANEL2)s; }
+QHeaderView { background: transparent; border: none; }
 QHeaderView::section { background: transparent; color: %(FAINT)s; border: none;
                        padding: 2px 6px 6px 6px; font-size: 11px; font-weight: 600; }
 QTableCornerButton::section { background: transparent; border: none; }
