@@ -42,7 +42,9 @@ def keep(entry):
     name = entry[0].replace("\\", "/").lower()
     return not any(d in name for d in DROP)
 
-a = Analysis([%(script)r], pathex=[%(root)r], datas=%(datas)r, excludes=%(excludes)r)
+a = Analysis([%(script)r], pathex=[%(root)r, %(inst)r], datas=%(datas)r,
+             hiddenimports=["installer", "installer.setup_app", "installer.setup_core"],
+             excludes=%(excludes)r)
 a.binaries = [b for b in a.binaries if keep(b)]
 a.datas = [d for d in a.datas if keep(d)]
 pyz = PYZ(a.pure)
@@ -89,7 +91,7 @@ def version_file(ver):
 
 def build(name, script, datas, onefile, distpath, vfile):
     icon = os.path.join(ROOT, "assets", "app.ico")
-    spec = SPEC % {"drop": DROP, "script": script, "root": ROOT, "datas": datas,
+    spec = SPEC % {"drop": DROP, "script": script, "root": ROOT, "inst": INST, "datas": datas,
                    "excludes": EXCLUDES}
     spec += (ONEFILE if onefile else ONEDIR) % {"name": name, "icon": icon, "version": vfile}
     spec_path = os.path.join(BUILD, name + ".spec")
@@ -131,7 +133,7 @@ def main():
     out = os.path.join(ROOT, "Output")
     name = "EnigmaCube-Setup-%s" % ver
     datas = [(payload, "."), (os.path.join(assets, "icon.png"), ".")]
-    build(name, os.path.join(INST, "setup_app.py"), datas, True, out, vfile)
+    build(name, os.path.join(ROOT, "setup_main.py"), datas, True, out, vfile)
     result = os.path.join(out, name + ".exe")
     print("\nDone: %s (%.1f MB)" % (result, os.path.getsize(result) / 1048576.0))
 

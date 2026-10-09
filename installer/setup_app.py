@@ -18,9 +18,9 @@ from PyQt5.QtWidgets import (QApplication, QButtonGroup, QCheckBox, QFileDialog,
                              QHBoxLayout, QLabel, QLineEdit, QProgressBar, QPushButton,
                              QStackedWidget, QVBoxLayout, QWidget)
 
-try:  # imported from the app (EnigmaCube.exe --uninstall)
-    from . import setup_core as core
-except ImportError:  # run as the setup script
+try:  # normal case: imported as installer.setup_app (setup exe and the app)
+    from installer import setup_core as core
+except ImportError:  # run directly as a script: python installer/setup_app.py
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import setup_core as core  # noqa: E402
 
@@ -566,6 +566,17 @@ def main(argv=None):
             core.uninstall(install_dir)
             _schedule_self_delete()
             return 0
+    elif quiet:
+        # silent install (used by the CI test and for scripted installs):
+        # EnigmaCube-Setup.exe --quiet [--dir <folder>]
+        try:
+            target = core.normalise_dir(install_dir or core.default_install_dir())
+            core.install(core.resource("payload.zip"), target, desktop_shortcut=False,
+                         existing=core.existing_install())
+        except Exception as e:  # noqa: BLE001 - reported through the exit code
+            sys.stderr.write("install failed: %s\n" % e)
+            return 1
+        return 0
 
     if hasattr(Qt, "AA_EnableHighDpiScaling"):
         QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
