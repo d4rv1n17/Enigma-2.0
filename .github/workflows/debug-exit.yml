@@ -8,8 +8,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        skip: ["none", "chev", "menu", "w_training,w_reference,w_achievements,w_timer", "w_timer", "w_training", "w_reference", "w_achievements", "ov", "quiz", "setup", "chev,menu,ov,quiz,w_training,w_reference,w_achievements,w_timer"]
-    name: "skip=${{ matrix.skip }}"
+        menu: ["none", "popgrab", "pop", "event", "close", "keep"]
+    name: "menu=${{ matrix.menu }}"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -26,7 +26,7 @@ jobs:
         continue-on-error: true
         timeout-minutes: 5
         env:
-          ET_SKIP: ${{ matrix.skip }}
+          ET_MENU: ${{ matrix.menu }}
         run: python main.py --selftest shots
       - name: CRASHED
         if: steps.st.outcome == 'failure'

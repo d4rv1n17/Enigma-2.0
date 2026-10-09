@@ -163,12 +163,19 @@ def _run(folder):
         _grab(app, win, folder, "%s_14_achievements" % lang)
 
         win.set_page(0)
-        if 'menu' not in SKIP:
-            win.windows_menu.popup(win.windows_btn.mapToGlobal(win.windows_btn.rect().bottomLeft()))
+        mode = os.environ.get("ET_MENU", "popgrab")
+        m = win.event_menu if mode == "event" else win.windows_menu
+        if mode != "none":
+            m.popup(win.windows_btn.mapToGlobal(win.windows_btn.rect().bottomLeft()))
         _pump(app)
-        _grab(app, win.windows_menu, folder, "%s_12_windows_menu" % lang)
+        if mode in ("popgrab", "event"):
+            _grab(app, m, folder, "%s_12_windows_menu" % lang)
         before = len(win.store.current.solves)
-        win.windows_menu.hide()
+        if mode == "close":
+            m.close()
+        elif mode != "keep":
+            m.hide()
+        _pump(app)
         for kind in ("training", "reference", "achievements", "timer"):
             if "w_" + kind in SKIP:
                 continue
