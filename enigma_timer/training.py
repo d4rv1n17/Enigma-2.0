@@ -522,7 +522,7 @@ class TrainingWidget(QWidget):
         head.addWidget(t)
         head.addStretch(1)
         if standalone:
-            self.pin = _button("📌", "icon", True)
+            self.pin = _button("⤒", "icon", True)
             self.pin.setToolTip(tr("pin_window"))
             self.pin.toggled.connect(self._toggle_pin)
             head.addWidget(self.pin)

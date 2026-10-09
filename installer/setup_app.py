@@ -401,6 +401,8 @@ class SetupWindow(QWidget):
                 self.b_main.setText(t("update") if updating else t("install"))
             self.b_cancel.setVisible(True)
         elif st == "working":
+            self.b_cancel.setVisible(False)
+            self.b_main.setVisible(False)
             if uninstall:
                 self.title.setText(t("removing"))
             else:
@@ -415,11 +417,13 @@ class SetupWindow(QWidget):
                 extra = t("done_desktop") if self.cb_desktop.isChecked() else ""
                 self.subtitle.setText(t("done_sub") % extra)
             self.b_main.setText(t("finish"))
+            self.b_main.setVisible(True)
             self.b_cancel.setVisible(False)
         elif st == "error":
             self.title.setText(t("error_title"))
             self.subtitle.setText(self.error)
             self.b_main.setText(t("retry"))
+            self.b_main.setVisible(True)
             self.b_cancel.setText(t("close"))
             self.b_cancel.setVisible(True)
 
