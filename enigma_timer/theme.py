@@ -99,8 +99,8 @@ QLabel#empty { color: %(MUTED)s; font-size: 13px; }
 QPushButton#pin { padding: 4px 10px; font-size: 12px; color: %(MUTED)s; border-radius: 8px; }
 QPushButton#pin:hover { color: %(TEXT)s; background: %(PANEL2)s; }
 QPushButton#pin:checked { color: #111; background: %(ACCENT)s; }
-QPushButton#steprow { background: %(PANEL)s; border-radius: 12px; padding: 0; text-align: left; }
-QPushButton#steprow:hover { background: %(PANEL2)s; }
+QFrame#steprow { background: %(PANEL)s; border-radius: 12px; }
+QFrame#steprow:hover { background: %(PANEL2)s; }
 QProgressBar { background: %(BORDER)s; border: none; border-radius: 3px; }
 QProgressBar::chunk { background: %(ACCENT)s; border-radius: 3px; }
 QPushButton#nav { font-size: 15px; font-weight: 600; padding: 6px 12px; color: %(MUTED)s; }

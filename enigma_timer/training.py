@@ -74,8 +74,22 @@ _PIX_CACHE = {}
 
 
 def clear_caches():
-    """Free cached pixmaps while Qt is still alive (avoids crashes on exit)."""
+    """Free cached pixmaps while Qt is still alive (avoids crashes on exit).
+
+    Style-sheet images (the combo box arrow) live in Qt's global caches, which
+    are destroyed after the platform plugin is unloaded; dropping the style
+    sheet first releases them while everything is still alive.
+    """
     _PIX_CACHE.clear()
+    from PyQt5.QtGui import QPixmapCache
+    from PyQt5.QtWidgets import QApplication
+    app = QApplication.instance()
+    if app is not None:
+        for w in app.topLevelWidgets():
+            w.hide()
+        app.setStyleSheet("")
+        app.processEvents()
+    QPixmapCache.clear()
 
 
 def case_pixmap(case, size, auf=None, arrows=True):
@@ -289,6 +303,22 @@ def _paint_overview_row(self, p, option):
 LevelDelegate._paint_overview = _paint_overview_row
 
 
+class _StepRow(QFrame):
+    """A clickable card row (a QPushButton cannot size itself to a layout)."""
+
+    clicked = pyqtSignal()
+
+    def __init__(self, parent=None):
+        QFrame.__init__(self, parent)
+        self.setObjectName("steprow")
+        self.setAttribute(Qt.WA_Hover, True)
+        self.setCursor(Qt.PointingHandCursor)
+
+    def mouseReleaseEvent(self, e):
+        if e.button() == Qt.LeftButton and self.rect().contains(e.pos()):
+            self.clicked.emit()
+
+
 class OverviewView(QWidget):
     """Course home: overall progress, what to do next, all steps."""
 
@@ -317,6 +347,7 @@ class OverviewView(QWidget):
             item = lay.takeAt(0)
             w = item.widget()
             if w is not None:
+                w.hide()
                 w.deleteLater()
         prog = self.hub.progress
         pid = self.hub.path
@@ -374,11 +405,8 @@ class OverviewView(QWidget):
                 t.setObjectName("sectionTitle")
                 t.setContentsMargins(4, 8, 0, 0)
                 lay.addWidget(t)
-            row = QPushButton()
-            row.setObjectName("steprow")
-            row.setCursor(Qt.PointingHandCursor)
-            row.setFocusPolicy(Qt.NoFocus)
-            row.clicked.connect(lambda _=False, lid=lv.id: self.open_level.emit(lid))
+            row = _StepRow()
+            row.clicked.connect(lambda lid=lv.id: self.open_level.emit(lid))
             rl = QHBoxLayout(row)
             rl.setContentsMargins(14, 10, 14, 10)
             rl.setSpacing(12)

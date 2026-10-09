@@ -81,7 +81,7 @@ L333 = [
     _lv("f2l", ("F2L", "F2L"),
         ("41 cases, two layers at once", "41 случай: два слоя сразу"),
         set_id="f2l", lesson="f2l", tier=INTERMEDIATE),
-    _lv("lookahead", ("Look-ahead & practice plan", "Look-ahead и план тренировок"),
+    _lv("lookahead", ("Look-ahead", "Look-ahead: без пауз"),
         ("From 30 to 15 seconds", "От 30 к 15 секундам"), lesson="lookahead", tier=INTERMEDIATE),
     _lv("oll", ("Full OLL", "Полный OLL"),
         ("57 cases, last layer orientation in one look",

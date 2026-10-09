@@ -181,10 +181,8 @@ STRINGS = {
     "empty_times": ("No solves yet.\nScramble the cube, then hold Space.",
                     "Сборок пока нет.\nЗапутай кубик по скрамблу и зажми Пробел."),
     "key_space": ("Space", "Пробел"),
-    "hint_ready": ("hold until the time turns green, release to start · any key stops",
-                   "держи, пока время не станет зелёным, отпусти — старт · любая клавиша — стоп"),
-    "hint_inspect": ("press to start 15 s inspection, then hold to start the solve",
-                     "нажми — 15 секунд инспекции, затем зажми для старта"),
+    "hint_ready": ("hold until green, release to start", "держи до зелёного, отпусти — старт"),
+    "hint_inspect": ("press for 15 s inspection", "нажми — 15 с инспекции"),
 }
 
 
